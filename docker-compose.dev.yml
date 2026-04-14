@@ -1,0 +1,16 @@
+# Nur CouchDB für lokale App-Entwicklung (kein pupils-app Container)
+services:
+  couchdb:
+    image: couchdb:3.3.3
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: devpassword
+      TEACHER_PASSWORD: teacherdev
+    volumes:
+      - ./stack/couchdb/init:/docker-entrypoint-initdb.d:ro
+      - couchdb-dev-data:/opt/couchdb/data
+    ports:
+      - "5984:5984"   # Direkt exposed (kein Tailscale nötig für Dev)
+
+volumes:
+  couchdb-dev-data:

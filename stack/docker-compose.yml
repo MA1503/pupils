@@ -1,0 +1,68 @@
+# Pupils — Produktions-Stack für Portainer
+# Deployment: In Portainer als Stack anlegen, Env-Vars direkt im Portainer-UI setzen
+# Build-Kontext: Repo-Root (damit ./app/ beim pupils-app-Build verfügbar ist)
+
+services:
+
+  couchdb:
+    image: couchdb:3.3.3
+    restart: unless-stopped
+    environment:
+      COUCHDB_USER: ${COUCHDB_ADMIN_USER}
+      COUCHDB_PASSWORD: ${COUCHDB_ADMIN_PASSWORD}
+      TEACHER_PASSWORD: ${TEACHER_PASSWORD}    # wird von 00-setup.sh gebraucht
+    volumes:
+      - /mnt/usb/pupils/couchdb-data:/opt/couchdb/data
+      - /mnt/usb/pupils/couchdb-config:/opt/couchdb/etc/local.d
+      - ./couchdb/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5984:5984"   # nur lokal — Tailscale macht Remote-Zugriff
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  couchdb-setup:
+    image: couchdb:3.3.3
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    environment:
+      COUCHDB_HOST: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_ADMIN_USER}
+      COUCHDB_PASSWORD: ${COUCHDB_ADMIN_PASSWORD}
+      TEACHER_PASSWORD: ${TEACHER_PASSWORD}
+    volumes:
+      - ./couchdb/init:/init:ro
+    entrypoint: ["/bin/bash", "/init/00-setup.sh"]
+    restart: "no"
+
+  pupils-app:
+    build:
+      context: ..          # Repo-Root als Build-Kontext, damit app/ erreichbar ist
+      dockerfile: stack/pupils-app/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8099:80"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+
+  backup:
+    build: ./backup
+    restart: unless-stopped
+    environment:
+      COUCHDB_URL: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_ADMIN_USER}
+      COUCHDB_PASSWORD: ${COUCHDB_ADMIN_PASSWORD}
+      FILEN_EMAIL: ${FILEN_EMAIL}
+      FILEN_PASSWORD: ${FILEN_PASSWORD}
+      FILEN_REMOTE_DIR: /pupils-backups
+      BACKUP_RETENTION_DAYS: "30"
+    volumes:
+      - /mnt/usb/pupils/backups:/backups
+    depends_on:
+      couchdb:
+        condition: service_healthy
