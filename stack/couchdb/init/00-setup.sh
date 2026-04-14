@@ -20,18 +20,27 @@ for db in _users _replicator _global_changes; do
 done
 
 # CORS aktivieren (für PouchDB aus dem Browser)
-curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/httpd/enable_cors" \
-  -d '"true"' -H "Content-Type: application/json"
-curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/origins" \
-  -d '"*"' -H "Content-Type: application/json"
-curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/credentials" \
-  -d '"true"' -H "Content-Type: application/json"
-curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/methods" \
-  -d '"GET, PUT, POST, HEAD, DELETE"' -H "Content-Type: application/json"
-curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/headers" \
-  -d '"accept, authorization, content-type, origin, referer"' \
-  -H "Content-Type: application/json"
-echo "CORS: OK"
+# COUCHDB_CORS_ORIGIN muss die URL sein, unter der die App erreichbar ist.
+# Beispiel: http://192.168.1.100:8099 oder https://pupils.tail.ts.net
+# Für lokale Entwicklung: http://localhost:8099
+# Leer = CORS deaktiviert (nur Same-Origin).
+CORS_ORIGIN="${COUCHDB_CORS_ORIGIN:-}"
+if [[ -n "${CORS_ORIGIN}" ]]; then
+  curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/httpd/enable_cors" \
+    -d '"true"' -H "Content-Type: application/json"
+  curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/origins" \
+    -d "\"${CORS_ORIGIN}\"" -H "Content-Type: application/json"
+  curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/credentials" \
+    -d '"true"' -H "Content-Type: application/json"
+  echo "CORS aktiviert für: ${CORS_ORIGIN}"
+  curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/methods" \
+    -d '"GET, PUT, POST, HEAD, DELETE"' -H "Content-Type: application/json"
+  curl -sf -u "${AUTH}" -X PUT "${HOST}/_node/_local/_config/cors/headers" \
+    -d '"accept, authorization, content-type, origin, referer"' \
+    -H "Content-Type: application/json"
+else
+  echo "CORS deaktiviert (COUCHDB_CORS_ORIGIN nicht gesetzt)"
+fi
 
 # teacher-User anlegen (App-Login)
 curl -sf -u "${AUTH}" -X PUT "${HOST}/_users/org.couchdb.user:teacher" \

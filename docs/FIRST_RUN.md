@@ -38,4 +38,4 @@ Sync-Symbol oben rechts wird kurz grün → Eintrag erscheint in Fauxton auf dem
 |---|---|---|
 | „Server nicht erreichbar" | Tailscale nicht verbunden | Tailscale auf Handy öffnen, verbinden |
 | „401: Falsches Passwort" | Falsches TEACHER_PASSWORD | Passwort in Portainer Stack-Env prüfen |
-| CORS-Fehler | 00-setup.sh nicht gelaufen | CouchDB-Container neu starten |
+| CORS-Fehler | COUCHDB_CORS_ORIGIN fehlt oder falsch | Env-Var in Portainer setzen: `COUCHDB_CORS_ORIGIN=https://<tailnet>.ts.net` |

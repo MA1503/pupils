@@ -10,7 +10,12 @@ services:
       - ./stack/couchdb/init:/docker-entrypoint-initdb.d:ro
       - couchdb-dev-data:/opt/couchdb/data
     ports:
-      - "5984:5984"   # Direkt exposed (kein Tailscale nötig für Dev)
+      - "5984:5984"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   couchdb-dev-data:

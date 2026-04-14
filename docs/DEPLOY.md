@@ -38,6 +38,7 @@ In Portainer unter dem Stack → **Environment variables**:
 | `COUCHDB_ADMIN_USER` | `admin` |
 | `COUCHDB_ADMIN_PASSWORD` | mind. 24 Zeichen, z.B. `pwgen -s 24 1` |
 | `TEACHER_PASSWORD` | mind. 16 Zeichen — das ist das App-Passwort |
+| `COUCHDB_CORS_ORIGIN` | URL der App, z.B. `https://<tailnet>.ts.net` (Port 443) oder `http://192.168.1.100:8099` |
 | `FILEN_EMAIL` | filen.io E-Mail |
 | `FILEN_PASSWORD` | filen.io Passwort |
 
