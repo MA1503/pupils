@@ -6,6 +6,7 @@ services:
       COUCHDB_USER: admin
       COUCHDB_PASSWORD: devpassword
       TEACHER_PASSWORD: teacherdev
+      COUCHDB_CORS_ORIGIN: http://localhost:5173
     volumes:
       - ./stack/couchdb/init:/docker-entrypoint-initdb.d:ro
       - couchdb-dev-data:/opt/couchdb/data
