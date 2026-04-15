@@ -9,7 +9,7 @@ arch:
   - amd64
 init: false
 image: "ghcr.io/ma1503/pupils-haos-addon"
-webui: "http://[HOST]:8099"
+webui: "http://[HOST]:[PORT:8099]"
 ports:
   8099/tcp: 8099
 panel_icon: "mdi:microphone"
