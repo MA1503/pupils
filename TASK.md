@@ -571,7 +571,7 @@ Alle Session-5a-Dateien wurden erstellt/aktualisiert:
 ### Implemented
 - [repository.yaml](repository.yaml) — HAOS-Repo-Marker, wird von HAOS Supervisor gelesen
 - [.github/workflows/build-addon.yaml](.github/workflows/build-addon.yaml) — Multi-Arch-Build (linux/amd64 + linux/arm64), GHCR-Push mit GITHUB_TOKEN, Build-Cache via GHA
-- [haos-addon/config.yaml](haos-addon/config.yaml:9) — `image` auf `ghcr.io/MA1503/pupils-haos-addon` (ohne `{arch}`-Suffix), `url` auf MA1503, `environment`-Sektion für COUCHDB_PASSWORD hinzugefügt
+- [haos-addon/config.yaml](haos-addon/config.yaml:9) — `image` auf `ghcr.io/ma1503/pupils-haos-addon` (ohne `{arch}`-Suffix), `url` auf ma1503, `environment`-Sektion für COUCHDB_PASSWORD hinzugefügt
 
 ### Tests
 - (not applicable — testing is the Reviewer's responsibility)
@@ -585,7 +585,7 @@ Alle Session-5a-Dateien wurden erstellt/aktualisiert:
 - Workflow-Syntax validieren (`docker/build-push-action` context/file paths prüfen)
 - Nach dem ersten Push: GHCR-Paket auf Sicht prüfen (beide Archs vorhanden?)
 - Repo muss public sein, damit HAOS die `repository.yaml` lesen kann
-- HAOS Repo-URL eintragen: `https://github.com/MA1503/pupils`
+- HAOS Repo-URL eintragen: `https://github.com/ma1503/pupils`
 - Data Migration: CouchDB-Daten vom Dev-Stack in Add-on übertragen
 
 ### Version

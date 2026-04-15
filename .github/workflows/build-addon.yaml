@@ -49,8 +49,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/MA1503/pupils-haos-addon:latest
-            ghcr.io/MA1503/pupils-haos-addon:${{ steps.version.outputs.version }}
+            ghcr.io/ma1503/pupils-haos-addon:latest
+            ghcr.io/ma1503/pupils-haos-addon:${{ steps.version.outputs.version }}
           cache-from: type=gha,scope=main
           cache-to: type=gha,mode=max,scope=main
 
@@ -58,5 +58,5 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ghcr.io/MA1503/pupils-haos-addon
+          subject-name: ghcr.io/ma1503/pupils-haos-addon
           subject-digest: ${{ steps.build.outputs.digest }}
