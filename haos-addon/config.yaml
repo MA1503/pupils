@@ -1,0 +1,25 @@
+name: "Yasmins Vocal Lab"
+version: "1.0.0"
+slug: "pupils"
+description: "Schüler-Verwaltung für Gesangslehrerin"
+url: "https://github.com/GITHUB_USER/pupils"
+arch:
+  - aarch64
+  - amd64
+image: "ghcr.io/GITHUB_USER/pupils-haos-addon-{arch}"
+ports:
+  8099/tcp: 8099
+map:
+  - data:rw
+options:
+  teacher_password: "changeme"
+  couchdb_password: "changeme"
+  filen_email: ""
+  filen_password: ""
+schema:
+  teacher_password: "password"
+  couchdb_password: "password"
+  filen_email: "str"
+  filen_password: "password"
+panel_icon: "mdi:microphone"
+panel_title: "Vocal Lab"
