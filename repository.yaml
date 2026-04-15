@@ -1,0 +1,4 @@
+name: Pupils HAOS Add-on Repository
+url: https://github.com/MA1503/pupils
+maintainer: MA1503
+buildpack: false
