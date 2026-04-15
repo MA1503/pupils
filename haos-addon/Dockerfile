@@ -37,6 +37,14 @@ COPY haos-addon/rootfs/ /
 
 RUN chmod +x /run.sh /app/backup.sh
 
+ARG BUILD_VERSION
+ARG BUILD_ARCH
+
+LABEL \
+  io.hass.version="${BUILD_VERSION}" \
+  io.hass.type="addon" \
+  io.hass.arch="aarch64,amd64"
+
 EXPOSE 8099
 
 ENTRYPOINT ["/run.sh"]
