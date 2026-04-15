@@ -61,20 +61,24 @@
 - **Problem:** HAOS zeigte Warnung "App wurde aus dem Repository entfernt". Add-on-Ordner hieß `haos-addon/`, slug war `pupils`. HAOS identifiziert Add-ons über den Ordnerpfad.
 - **Entscheidung:** Ordner von `haos-addon/` zu `pupils/` umbenannt (slug = Ordnername). Alle Pfade in Dockerfile und CI-Workflow angepasst.
 
-## v1.0.5 — 2026-04-15 (aktuell installiert und funktionsfähig)
+## v1.0.5 — 2026-04-15
 
 ### Fix: Add-on nicht in HAOS Store sichtbar
-- **Problem:** Nach Umbenennung des Ordners wurde das Add-on nicht im Store angezeigt. HAOS erwartet `init: true` (s6-overlay) als Default. Ohne s6-overlay muss `init: false` gesetzt werden. Außerdem war das `webui`-Format falsch (`http://[HOST]:8099` statt `http://[HOST]:[PORT:8099]`), was HAOS komplett ignorierte.
+- **Problem:** Nach Umbenennung des Ordners wurde das Add-on nicht im Store angezeigt. Zwei Ursachen: (1) HAOS erwartet `init: true` (s6-overlay) als Default — ohne s6-overlay muss `init: false` gesetzt werden. (2) `webui`-Format war falsch: `http://[HOST]:8099` statt `http://[HOST]:[PORT:8099]` — HAOS ignorierte die gesamte config.yaml.
 - **Entscheidung:** `init: false`, `startup: "application"`, korrektes `webui`-Format.
 
+## v1.0.6 — 2026-04-15
+
 ### Fix: Falscher GHCR-Image-Name
-- **Problem:** Beim Umbenennen von `haos-addon` → `pupils` wurde `replaceAll` auch auf den Image-Namen angewendet: `pupils-haos-addon` → `pupils-pupils`. HAOS konnte das Image nicht pullen (404).
-- **Entscheidung:** Image-Name korrigiert zu `pupils-haos-addon`. `no-cache: true` im CI-Workflow gesetzt.
+- **Problem:** Beim Umbenennen von `haos-addon` → `pupils` wurde `replaceAll` auch auf den Image-Namen im CI-Workflow angewendet: `pupils-haos-addon` → `pupils-pupils`. HAOS konnte das Image nicht pullen (404 manifest unknown). Zusätzlich hat der Docker-Cache alte Layer wiederverwendet und keine neuen Tags gepusht.
+- **Entscheidung:** Image-Name korrigiert zu `pupils-haos-addon`. `no-cache: true` im CI-Workflow gesetzt um stale Docker-Cache zu verhindern.
+
+## v1.0.7 — 2026-04-15 (aktuell)
 
 ### Fix: Sidebar-Ingress mit nginx Path-Stripping
-- **Problem:** HAOS Ingress proxyt unter `/api/hassio_ingress/HASH/`. SvelteKit erzeugt absolute Asset-Pfade (`/_app/...`) die im Ingress-Kontext nicht aufgelöst werden → White Screen.
-- **Entscheidung:** nginx rewrite-Regel die den Ingress-Prefix vor dem Servieren entfernt. App funktioniert direkt und via Ingress. `ingress: true` und `ingress_port: 8099` in config.yaml.
+- **Problem:** HAOS Ingress proxyt die App unter `/api/hassio_ingress/HASH/`. SvelteKit erzeugt absolute Asset-Pfade (`/_app/...`) die im Ingress-Kontext nicht aufgelöst werden → White Screen.
+- **Entscheidung:** nginx rewrite-Regel die den Ingress-Prefix (`/api/hassio_ingress/HASH/`) vor dem Servieren entfernt. App funktioniert sowohl direkt (Port 8099) als auch via Ingress. `ingress: true` und `ingress_port: 8099` in config.yaml.
 
 ### Fix: Pausierte Schüler nicht sichtbar
-- **Problem:** Pausierte Schüler wurden aus der Liste gefiltert und waren weder sichtbar noch wieder aktivierbar.
-- **Entscheidung:** `listStudents()` bekommt `includeArchived`-Parameter (Default: `false`). Auge-Button in der Schülerliste zum Ein-/Ausblenden pausierter Schüler.
+- **Problem:** Pausierte Schüler wurden aus der Liste gefiltert (`listStudents()` schloss `archived: true` aus) und waren weder sichtbar noch wieder aktivierbar.
+- **Entscheidung:** `listStudents()` bekommt `includeArchived`-Parameter (Default: `false`). Auge-Button in der Schülerliste zum Ein-/Ausblenden pausierter Schüler. Pausierte Schüler erscheinen mit "Pausiert"-Badge und können über die Detailseite wieder aktiviert werden.
