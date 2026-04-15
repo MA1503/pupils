@@ -1,477 +1,512 @@
-# Pupils App — Task für Kimi Implementierung (Session 3)
+# Pupils App — HAOS Add-on (Session 5a + 5b)
 
 ## Kontext
 
-SvelteKit PWA + Docker Stack für eine Musiklehrerin. CSS ist **handgerollt** (kein Tailwind-Plugin) — alle Utility-Klassen stehen in `app/src/app.css`. Neue CSS-Klassen MÜSSEN dort eingetragen werden, sonst sind sie wirkungslos.
+SvelteKit PWA + CouchDB-Stack für eine Musiklehrerin.  
+MVP fertig und lokal getestet (Backup läuft, Tailscale verbunden).
 
-Svelte 5 mit Runes (`$state`, `$derived`, `$props`). Stores in `.ts`-Dateien bleiben bei `writable()` aus `svelte/store`.
+**Deployment-Ziel:** Raspberry Pi 4B 4GB (aarch64) mit HAOS und Tailscale.  
+**Anforderung:** 3+ Jahre wartbar ohne Linux-Wissen — Updates per HAOS-UI.
 
----
+Der bestehende Docker-Compose-Stack (`stack/`) bleibt unverändert als Dev-Umgebung.  
+Für HAOS wird ein Add-on im selben Repo als Unterordner `haos-addon/` gebaut.
 
-## Change 1 — App-Name umbenennen
-
-**Datei:** `app/src/routes/+layout.svelte`
-
-**Zeile 40:**
-```svelte
-<!-- ALT: -->
-<span class="text-xl font-bold text-[#ff8ba1] font-headline tracking-tight">The Rhythmic Atelier</span>
-
-<!-- NEU: -->
-<span class="text-xl font-bold text-[#ff8ba1] font-headline tracking-tight">Yasmins Vocal Lab</span>
-```
+**Repo bleibt privat während der Entwicklung — nach Session 5b public machen.**
 
 ---
 
-## Change 2 — Buttons mehr visuelle Tiefe
+## Versioning
 
-Alle aktiven/primären Buttons wirken zu flach. Fixes in `app/src/app.css` und den Templates.
+### `version.json` (neu, Root-Level)
 
-### 2a. In `app/src/app.css` diese Klassen hinzufügen (am Ende der Datei):
-
-```css
-/* === Button Elevation === */
-.shadow-primary { box-shadow: 0 4px 16px rgba(255, 139, 161, 0.35); }
-.shadow-primary-lg { box-shadow: 0 8px 24px rgba(255, 139, 161, 0.4); }
-.text-primary-dim { color: var(--primary-dim); }
-.primary-dim { color: var(--primary-dim); }
-.mt-0\.5 { margin-top: 0.125rem; }
-.border-primary\/20 { border-color: rgba(255, 139, 161, 0.2); }
-.-translate-x-1\/2 { transform: translateX(-50%); }
-.z-\[100\] { z-index: 100; }
-.z-\[101\] { z-index: 101; }
-.left-1\/2 { left: 50%; }
-details summary::-webkit-details-marker { display: none; }
-.font-body { font-family: var(--font-body); }
-```
-
-### 2b. In `app/src/routes/+page.svelte` — Sort-Buttons (Zeilen 43–54):
-
-Aktiver Sort-Button bekommt zusätzlich `shadow-primary`:
-```svelte
-class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'name' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
-```
-```svelte
-class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
-```
-
-### 2c. In `app/src/routes/+page.svelte` — FAB-Button (Zeile ~98):
-
-`editorial-shadow` → `editorial-shadow shadow-primary-lg`:
-```svelte
-class="editorial-shadow shadow-primary-lg bg-gradient-to-br from-primary to-primary-container text-on-primary-container h-14 pl-5 pr-6 rounded-2xl flex items-center gap-3 active:scale-95 transition-transform duration-200"
-```
-
-### 2d. In `app/src/routes/s/[id]/+page.svelte` — HEUTE FAB (Zeile ~323):
-
-```svelte
-class="flex items-center gap-2 px-6 py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-extrabold rounded-2xl fab-shadow shadow-primary-lg active:scale-90 transition-transform"
-```
-
----
-
-## Change 3 — Settings-Button (Zahnrad) mit Funktion belegen
-
-Der Settings-Button in `+layout.svelte` öffnet ein Bottom-Sheet mit Verbindungsstatus und "Verbindung ändern".
-
-### 3a. `app/src/routes/+layout.svelte` — komplettes `<script>` ersetzen:
-
-```svelte
-<script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { loadConfig, startSync, onSyncStatus } from '$lib/db';
-  import { syncStatus } from '$lib/stores';
-
-  let { children } = $props();
-  let currentPath = $derived($page.url.pathname);
-  let settingsOpen = $state(false);
-  let config = $state<{ url: string; user: string } | null>(null);
-
-  onMount(() => {
-    const cfg = loadConfig();
-    config = cfg ? { url: cfg.url, user: cfg.user } : null;
-    if (!cfg && $page.url.pathname !== '/setup') {
-      goto('/setup');
-      return;
-    }
-    if (cfg) {
-      startSync(cfg.url, cfg.user, cfg.pass);
-    }
-    const unsubscribe = onSyncStatus((s) => syncStatus.set(s));
-    return unsubscribe;
-  });
-
-  function isActive(path: string): boolean {
-    if (path === '/') return currentPath === '/' || currentPath.startsWith('/s/');
-    return currentPath.startsWith(path);
-  }
-</script>
-```
-
-### 3b. `app/src/routes/+layout.svelte` — komplettes Template ersetzen:
-
-```svelte
-<div class="flex justify-center min-h-screen">
-  <main class="w-full max-w-[640px] flex flex-col min-h-screen pb-20">
-    <!-- TopAppBar -->
-    <header class="fixed top-0 w-full z-50 bg-[#131313]/80 backdrop-blur-md max-w-[640px]">
-      <div class="flex items-center justify-between px-6 h-16 w-full">
-        <span class="text-xl font-bold text-[#ff8ba1] font-headline tracking-tight">Yasmins Vocal Lab</span>
-        <button
-          onclick={() => settingsOpen = true}
-          class="material-symbols-outlined text-[#ececec] hover:bg-[#262626] transition-colors p-2 rounded-full"
-        >settings</button>
-      </div>
-    </header>
-
-    <!-- Content -->
-    <div class="mt-20 px-6 pb-6">
-      {@render children()}
-    </div>
-
-    <!-- BottomNavBar -->
-    <nav class="fixed bottom-0 w-full z-50 rounded-t-3xl bg-[#131313]/80 backdrop-blur-md shadow-[0_-12px_32px_rgba(0,0,0,0.4)] max-w-[640px]">
-      <div class="flex justify-around items-center px-4 h-20 w-full">
-        <a href="/"
-          class="flex flex-col items-center justify-center px-4 py-1 rounded-xl transition-transform active:scale-90 {isActive('/') && currentPath !== '/setup' ? 'text-[#ff8ba1] bg-[#262626]' : 'text-[#484848] hover:text-[#ff8ba1]'}"
-        >
-          <span class="material-symbols-outlined" style={isActive('/') && currentPath !== '/setup' ? "font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" : ""}>group</span>
-          <span class="font-headline text-[10px] font-bold uppercase tracking-widest mt-1">Schüler</span>
-        </a>
-        <a href="/heute"
-          class="flex flex-col items-center justify-center px-4 py-1 rounded-xl transition-transform active:scale-90 {isActive('/heute') ? 'text-[#ff8ba1] bg-[#262626]' : 'text-[#484848] hover:text-[#ff8ba1]'}"
-        >
-          <span class="material-symbols-outlined">event_note</span>
-          <span class="font-headline text-[10px] font-bold uppercase tracking-widest mt-1">Heute</span>
-        </a>
-        <span class="flex flex-col items-center justify-center px-4 py-1 text-[#2a2a2a] cursor-not-allowed">
-          <span class="material-symbols-outlined">library_music</span>
-          <span class="font-headline text-[10px] font-bold uppercase tracking-widest mt-1">Bibliothek</span>
-        </span>
-        <span class="flex flex-col items-center justify-center px-4 py-1 text-[#2a2a2a] cursor-not-allowed">
-          <span class="material-symbols-outlined">person</span>
-          <span class="font-headline text-[10px] font-bold uppercase tracking-widest mt-1">Profil</span>
-        </span>
-      </div>
-    </nav>
-  </main>
-</div>
-
-<!-- Settings Bottom Sheet -->
-{#if settingsOpen}
-  <div
-    class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-    onclick={() => settingsOpen = false}
-    role="presentation"
-  ></div>
-  <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] z-[101] bg-[#191a1a] rounded-t-3xl p-6 pb-10 shadow-[0_-8px_40px_rgba(0,0,0,0.5)]">
-    <div class="w-10 h-1 bg-[#484848] rounded-full mx-auto mb-6"></div>
-    <h2 class="font-headline font-bold text-lg text-on-surface mb-6">Einstellungen</h2>
-
-    <div class="space-y-4 mb-8">
-      <div class="bg-surface-container-highest p-4 rounded-xl">
-        <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Server</p>
-        <p class="text-sm text-on-surface-variant font-body truncate">{config?.url ?? '—'}</p>
-      </div>
-      <div class="bg-surface-container-highest p-4 rounded-xl">
-        <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Benutzer</p>
-        <p class="text-sm text-on-surface-variant font-body">{config?.user ?? '—'}</p>
-      </div>
-    </div>
-
-    <button
-      onclick={() => { settingsOpen = false; goto('/setup'); }}
-      class="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-headline font-bold rounded-xl active:scale-95 transition-transform shadow-primary"
-    >
-      Verbindung ändern
-    </button>
-  </div>
-{/if}
-```
-
----
-
-## Change 4 — Schüler Pausieren / Reaktivieren
-
-**Datei:** `app/src/routes/s/[id]/+page.svelte`
-
-### 4a. Funktion im `<script>` ergänzen (nach der `saveStudent`-Funktion):
-
-```ts
-async function toggleArchive() {
-  if (!student) return;
-  const msg = student.archived
-    ? `${student.name} wieder aktivieren?`
-    : `${student.name} pausieren? Der Schüler verschwindet aus der Hauptliste.`;
-  if (!confirm(msg)) return;
-  student = await updateStudent(student, { archived: !student.archived });
+```json
+{
+  "version": "1.0.0"
 }
 ```
 
-### 4b. Im Edit-Formular nach dem Tarif-`<input>`, vor den Buttons einfügen:
+### `CHANGELOG.md` (neu, Root-Level)
 
-```svelte
-<!-- Archiv-Toggle -->
-<div class="flex items-center justify-between bg-surface-container-low p-4 rounded-xl">
-  <div>
-    <p class="text-sm font-semibold text-on-surface">Status</p>
-    <p class="text-xs text-outline mt-0\.5">{student.archived ? 'Pausiert — nicht in Hauptliste' : 'Aktiv'}</p>
-  </div>
-  <button
-    type="button"
-    onclick={toggleArchive}
-    class="px-4 py-2 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {student.archived ? 'bg-primary text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant border border-outline-variant\/30'}"
-  >
-    {student.archived ? 'Aktivieren' : 'Pausieren'}
-  </button>
-</div>
-```
+```markdown
+# Changelog
 
-**Korrektur der CSS-Klasse** — In `app.css` sicherstellen:
-```css
-.mt-0\.5 { margin-top: 0.125rem; }
-.border-outline-variant\/30 { border-color: rgba(72, 72, 72, 0.3); }
+## v1.0.0 — 2026-04-15
+
+### MVP
+- SvelteKit PWA mit PouchDB-Sync
+- CouchDB-Backend in Docker
+- Backup nach filen.io via supercronic (täglich 02:00)
+- /heute-Seite mit Tagesansicht
+- Archiv-Toggle für inaktive Schüler
+- Setup-Seite für CouchDB-Verbindung
 ```
 
 ---
 
-## Change 5 — Neue Route `/heute`
+## Session 5a — HAOS Add-on: lokaler Build + Docker-Test
 
-**Neue Datei erstellen:** `app/src/routes/heute/+page.svelte`
+**Ziel:** Add-on als Docker-Image lokal bauen und testen.  
+Kein GitHub nötig, kein HAOS nötig — nur `docker build` + `docker run`.
 
-```svelte
-<script lang="ts">
-  import { onMount } from 'svelte';
-  import { listStudents } from '$lib/repo';
-  import type { Student } from '$lib/types';
+### Repo-Struktur nach Session 5a
 
-  const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-
-  let allStudents = $state<Student[]>([]);
-  let loading = $state(true);
-
-  const todayAbbr = DAYS[new Date().getDay()];
-
-  onMount(async () => {
-    allStudents = await listStudents();
-    loading = false;
-  });
-
-  const todayStudents = $derived(
-    allStudents.filter(s => s.lessonSlot?.trimStart().startsWith(todayAbbr))
-  );
-
-  const otherStudents = $derived(
-    allStudents.filter(s => !s.lessonSlot?.trimStart().startsWith(todayAbbr))
-  );
-</script>
-
-<section class="space-y-6">
-  <div>
-    <h2 class="font-headline text-2xl font-extrabold text-on-surface tracking-tight">
-      {DAYS[new Date().getDay()]}, {new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
-    </h2>
-    <p class="text-sm text-outline mt-1">Unterricht heute</p>
-  </div>
-
-  {#if loading}
-    <p class="text-center text-outline py-12">Laden…</p>
-  {:else if todayStudents.length === 0}
-    <div class="bg-surface-container-highest p-8 rounded-2xl text-center">
-      <span class="material-symbols-outlined text-outline text-4xl block mb-3">event_available</span>
-      <p class="text-on-surface-variant">Keine Unterrichtsstunden für heute gefunden.</p>
-      <p class="text-xs text-outline mt-2">Tipp: Termin im Format "Mo 17:00" eintragen.</p>
-    </div>
-  {:else}
-    <div class="space-y-4">
-      {#each todayStudents as student (student._id)}
-        <a
-          href="/s/{student._id}"
-          class="block bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform shadow-primary"
-        >
-          <div class="flex items-center gap-4">
-            <div class="h-11 w-11 rounded-full bg-surface-container-low flex items-center justify-center border border-primary\/20">
-              <span class="material-symbols-outlined text-primary">person</span>
-            </div>
-            <div>
-              <h3 class="font-headline font-bold text-on-surface">{student.name}</h3>
-              <p class="text-sm text-outline">{student.lessonSlot}</p>
-            </div>
-          </div>
-          <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
-        </a>
-      {/each}
-    </div>
-  {/if}
-
-  {#if otherStudents.length > 0 && !loading}
-    <details class="mt-8">
-      <summary class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold cursor-pointer select-none mb-4 list-none flex items-center gap-2">
-        <span class="material-symbols-outlined text-sm">expand_more</span>
-        Alle anderen ({otherStudents.length})
-      </summary>
-      <div class="space-y-3 mt-4">
-        {#each otherStudents as student (student._id)}
-          <a
-            href="/s/{student._id}"
-            class="block bg-surface-container-low p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
-          >
-            <div class="flex items-center gap-3">
-              <span class="material-symbols-outlined text-outline">person</span>
-              <div>
-                <h3 class="font-headline font-bold text-sm text-on-surface-variant">{student.name}</h3>
-                <p class="text-xs text-outline">{student.lessonSlot || 'Kein Termin'}</p>
-              </div>
-            </div>
-            <span class="material-symbols-outlined text-outline-variant text-sm">chevron_right</span>
-          </a>
-        {/each}
-      </div>
-    </details>
-  {/if}
-</section>
+```
+pupils/
+├── haos-addon/              ← NEU
+│   ├── Dockerfile
+│   ├── config.yaml          (HAOS-Manifest — noch nicht aktiv, für Session 5b)
+│   ├── build.yaml
+│   ├── CHANGELOG.md         (Symlink oder Kopie)
+│   └── rootfs/
+│       ├── etc/
+│       │   ├── cont-init.d/
+│       │   │   └── 10-init.sh
+│       │   ├── services.d/
+│       │   │   ├── couchdb/
+│       │   │   │   ├── run
+│       │   │   │   └── finish
+│       │   │   ├── nginx/
+│       │   │   │   ├── run
+│       │   │   │   └── finish
+│       │   │   └── cron/
+│       │   │       ├── run
+│       │   │       └── finish
+│       │   └── nginx/
+│       │       └── conf.d/
+│       │           └── default.conf
+│       └── app/
+│           ├── backup.sh
+│           └── crontab
+├── app/                     ← unverändert (SvelteKit)
+├── stack/                   ← unverändert (Dev Docker Compose)
+├── scripts/                 ← unverändert (restore.sh)
+├── version.json             ← NEU
+├── CHANGELOG.md             ← NEU
+└── TASK.md
 ```
 
 ---
 
-## Change 6 — Security: docker-compose.yml Fixes
+### `haos-addon/Dockerfile`
 
-**Datei:** `stack/docker-compose.yml`
+Build-Context ist das **Repo-Root** (nicht `haos-addon/`):
 
-### 6a. REGRESSION FIXEN — `initdb.d` Volume aus `couchdb` Service entfernen
+```dockerfile
+# Build-Context: Repo-Root (damit app/ erreichbar ist)
 
-Im `couchdb` Service diese Zeile entfernen (CouchDB ignoriert `initdb.d` — nur der `couchdb-setup` Service führt das Script aus):
+# Stage 1: SvelteKit bauen
+FROM node:20-alpine AS app-builder
+WORKDIR /build
+COPY app/package*.json ./
+RUN npm ci
+COPY app/ .
+RUN npm run build
 
-```yaml
-# DIESE ZEILE ENTFERNEN:
-- ./couchdb/init:/docker-entrypoint-initdb.d:ro
-```
+# Stage 2: Runtime
+FROM couchdb:3.3.3
 
-### 6b. Resource-Limits hinzufügen (Finding 7 aus Security Report)
+ARG S6_OVERLAY_VERSION=3.2.0.2
 
-Für `couchdb`, `pupils-app`, `backup` je ein `deploy`-Block ergänzen:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      nginx curl xz-utils ca-certificates nodejs npm jq \
+    && rm -rf /var/lib/apt/lists/*
 
-```yaml
-  couchdb:
-    # ... (bestehende config, nach logging:)
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '1.0'
+# s6-overlay (multi-arch: erkennt Arch automatisch)
+RUN ARCH=$(uname -m) && \
+    curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" \
+      | tar -Jxp -C / && \
+    curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz" \
+      | tar -Jxp -C /
 
-  pupils-app:
-    # ... (bestehende config, nach logging:)
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.5'
+# supercronic (multi-arch)
+ARG SUPERCRONIC_ARCH=amd64
+RUN curl -fsSLo /usr/local/bin/supercronic \
+      "https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-${SUPERCRONIC_ARCH}" \
+    && chmod +x /usr/local/bin/supercronic
 
-  backup:
-    # ... (bestehende config, nach logging:)
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
+# filen CLI
+RUN npm install -g @filen/cli
+
+# Statische App-Dateien aus Stage 1
+COPY --from=app-builder /build/build /var/www/pupils/
+
+# rootfs (Services + Scripts)
+COPY haos-addon/rootfs/ /
+
+RUN chmod +x /etc/cont-init.d/10-init.sh \
+    && chmod +x /etc/services.d/couchdb/run /etc/services.d/couchdb/finish \
+    && chmod +x /etc/services.d/nginx/run /etc/services.d/nginx/finish \
+    && chmod +x /etc/services.d/cron/run /etc/services.d/cron/finish \
+    && chmod +x /app/backup.sh
+
+EXPOSE 8099
+
+ENTRYPOINT ["/init"]
 ```
 
 ---
 
-## Change 7 — Security: restore.sh trap für Temp-File (Finding 10)
-
-**Datei:** `scripts/restore.sh`
-
-Nach Zeile 2 (`set -euo pipefail`) einfügen:
+### `haos-addon/rootfs/etc/cont-init.d/10-init.sh`
 
 ```bash
-# Temp-File bei Exit/Fehler automatisch löschen (Finding 10)
-TMPFILE="/tmp/pupils-restore-bulk-$$.json"
-trap 'rm -f "${TMPFILE}"' EXIT INT TERM
+#!/usr/bin/with-contenv bash
+set -euo pipefail
+
+# Im lokalen Test: /data/options.json muss manuell bereitgestellt werden
+# Im HAOS-Add-on: wird automatisch vom Supervisor geschrieben
+OPTIONS=/data/options.json
+
+TEACHER_PASSWORD=$(jq -r '.teacher_password' "${OPTIONS}")
+COUCHDB_PASSWORD=$(jq -r '.couchdb_password' "${OPTIONS}")
+FILEN_EMAIL=$(jq -r '.filen_email' "${OPTIONS}")
+FILEN_PASSWORD=$(jq -r '.filen_password' "${OPTIONS}")
+
+# Persistente Verzeichnisse
+mkdir -p /data/couchdb-data /data/backups
+
+# CouchDB konfigurieren
+mkdir -p /opt/couchdb/etc/local.d
+cat > /opt/couchdb/etc/local.d/haos.ini << EOF
+[couchdb]
+database_dir = /data/couchdb-data
+view_index_dir = /data/couchdb-data
+
+[admins]
+admin = ${COUCHDB_PASSWORD}
+
+[chttpd]
+bind_address = 127.0.0.1
+port = 5984
+
+[cors]
+enable = false
+EOF
+
+# Backup-Env für backup.sh
+cat > /app/backup.env << EOF
+COUCHDB_URL=http://127.0.0.1:5984
+COUCHDB_USER=admin
+COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+FILEN_EMAIL=${FILEN_EMAIL}
+FILEN_PASSWORD=${FILEN_PASSWORD}
+FILEN_REMOTE_DIR=/pupils-backups
+BACKUP_RETENTION_DAYS=30
+EOF
+
+echo "[init] Konfiguration abgeschlossen."
 ```
 
-Dann alle 3 Vorkommen von `/tmp/pupils-restore-bulk.json` durch `"${TMPFILE}"` ersetzen.
+---
+
+### `haos-addon/rootfs/etc/services.d/couchdb/run`
+
+```bash
+#!/usr/bin/with-contenv bash
+exec /docker-entrypoint.sh /opt/couchdb/bin/couchdb
+```
+
+### `haos-addon/rootfs/etc/services.d/couchdb/finish`
+
+```bash
+#!/usr/bin/execlineb -S0
+s6-svscanctl -t /var/run/s6/services
+```
 
 ---
 
-## Handoff
+### `haos-addon/rootfs/etc/services.d/nginx/run`
 
-### Implemented
-- **[app/src/routes/+layout.svelte](app/src/routes/+layout.svelte)** — Komplette Datei ersetzt:
-  - App-Name geändert zu "Yasmins Vocal Lab" (Zeile 21)
-  - Settings-Button mit `onclick` Handler für Bottom-Sheet (Zeile 22-25)
-  - Neue State-Variablen `settingsOpen` und `config` (Zeile 12-13)
-  - `isActive()` Funktion angepasst für `/s/` Routes (Zeile 29-32)
-  - Neuer "Heute" Tab in BottomNav mit korrekter Aktiv-Logik (Zeile 43-47)
-  - Bibliothek und Profil Tabs visuell deaktiviert (Zeile 48-55)
-  - Settings Bottom-Sheet Overlay und Panel (Zeile 62-91)
+```bash
+#!/usr/bin/with-contenv bash
 
-- **[app/src/app.css](app/src/app.css)** — Neue Utility-Klassen am Ende hinzugefügt (Zeile 421-437):
-  - `.shadow-primary`, `.shadow-primary-lg` — Pink glow für Buttons
-  - `.text-primary-dim`, `.primary-dim`
-  - `.mt-0.5`, `.border-primary/20`
-  - `.-translate-x-1/2`, `.left-1/2` — für Bottom-Sheet Positionierung
-  - `.z-[100]`, `.z-[101]` — Layering für Overlay/Sheet
-  - `details summary::-webkit-details-marker` — für /heute Seite
-  - `.font-body`, `.cursor-not-allowed`
+# Warte bis CouchDB bereit ist
+until curl -sf http://127.0.0.1:5984/ > /dev/null 2>&1; do
+  echo "[nginx] Warte auf CouchDB..."
+  sleep 2
+done
 
-- **[app/src/routes/+page.svelte](app/src/routes/+page.svelte)** — Button Shadows:
-  - Sort-Buttons "Name" und "Vertragsbeginn" bekommen `shadow-primary` wenn aktiv (Zeile 45, 51)
-  - FAB Button bekommt `shadow-primary-lg` zusätzlich zu `editorial-shadow` (Zeile 98)
+# pupils-DB und teacher-User anlegen (idempotent)
+COUCHDB_PASSWORD=$(jq -r '.couchdb_password' /data/options.json)
+TEACHER_PASSWORD=$(jq -r '.teacher_password' /data/options.json)
 
-- **[app/src/routes/s/[id]/+page.svelte](app/src/routes/s/[id]/+page.svelte)** — Archiv-Funktion:
-  - Neue `toggleArchive()` Funktion (Zeile 133-140)
-  - Archiv-Toggle UI im Edit-Formular nach Tarif-Input (Zeile 177-188)
-  - HEUTE FAB bekommt `shadow-primary-lg` (Zeile 323)
+curl -sf -u "admin:${COUCHDB_PASSWORD}" -X PUT http://127.0.0.1:5984/pupils || true
 
-- **[app/src/routes/heute/+page.svelte](app/src/routes/heute/+page.svelte)** — NEU erstellt:
-  - Zeigt Schüler mit heutigem Wochentag im lessonSlot
-  - Kollapsible "Alle anderen" Sektion mit nativem `<details>`
+# teacher-User (CouchDB-User, nicht Admin) — für App-Login
+curl -sf -u "admin:${COUCHDB_PASSWORD}" \
+  -X PUT http://127.0.0.1:5984/_users/org.couchdb.user:teacher \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"teacher\",\"password\":\"${TEACHER_PASSWORD}\",\"roles\":[],\"type\":\"user\"}" || true
 
-- **[stack/docker-compose.yml](stack/docker-compose.yml)** — Security Fixes:
-  - `initdb.d` Volume aus couchdb Service entfernt (Regression Fix)
-  - Resource-Limits für couchdb (512M / 1.0 CPU), pupils-app (128M / 0.5 CPU), backup (256M / 0.5 CPU)
+# teacher Lese-/Schreibzugriff auf pupils-DB
+curl -sf -u "admin:${COUCHDB_PASSWORD}" \
+  -X PUT http://127.0.0.1:5984/pupils/_security \
+  -H "Content-Type: application/json" \
+  -d '{"admins":{"names":[],"roles":[]},"members":{"names":["teacher"],"roles":[]}}' || true
 
-- **[scripts/restore.sh](scripts/restore.sh)** — Security Finding 10:
-  - `trap` hinzugefügt für automatische Temp-File Löschung bei Exit/Error (Zeile 14-16)
-  - Temp-File Pfad enthält nun PID (`$$`) für Eindeutigkeit
-  - Alle `/tmp/pupils-restore-bulk.json` Vorkommen durch `"${TMPFILE}"` ersetzt
+exec nginx -g "daemon off;"
+```
 
-### Tests
-- (not applicable — testing is the Reviewer's responsibility)
+### `haos-addon/rootfs/etc/services.d/nginx/finish`
 
-### Deviations from plan
-- None — implemented exactly as specified
-
-### Open points for Reviewer
-- Verify the /heute route correctly filters students by weekday abbreviation (Mo, Di, Mi, etc.)
-- Check that archived students are properly filtered in the main list (should already work via existing listStudents logic)
-- Test the settings bottom sheet opens/closes correctly on mobile
-
-### Version
-- Current: No version.md file found
+```bash
+#!/usr/bin/execlineb -S0
+s6-svscanctl -t /var/run/s6/services
+```
 
 ---
 
-## Zusammenfassung
+### `haos-addon/rootfs/etc/services.d/cron/run`
 
-| # | Datei | Art |
-|---|-------|-----|
-| 1+3 | `app/src/routes/+layout.svelte` | Name + Settings-Sheet + Heute-Nav |
-| 2 | `app/src/routes/+page.svelte` | Button-Schatten |
-| 4 | `app/src/routes/s/[id]/+page.svelte` | Pausieren/Aktivieren |
-| 5 | `app/src/routes/heute/+page.svelte` | NEU erstellen |
-| 2a | `app/src/app.css` | Neue Utility-Klassen |
-| 6 | `stack/docker-compose.yml` | initdb.d fix + Resource-Limits |
-| 7 | `scripts/restore.sh` | trap Temp-File |
+```bash
+#!/usr/bin/with-contenv bash
+set -a
+source /app/backup.env
+set +a
+exec supercronic /app/crontab
+```
 
-## Hinweise für den Implementierer
+### `haos-addon/rootfs/etc/services.d/cron/finish`
 
-- **Kein Tailwind-Plugin** — alle CSS-Klassen müssen in `app/src/app.css` vorhanden sein. Jede neue Klasse die im Template auftaucht MUSS dort definiert sein.
-- **Svelte 5**: `$state()`, `$derived()`, `$props()` in `.svelte` Dateien. `writable()` in `.ts` Dateien.
-- `confirm()` in `toggleArchive` ist absichtlich einfach gehalten — läuft auf Android Chrome problemlos.
-- `details`/`summary` für "Alle anderen" braucht kein JavaScript — nativer Browser-Collapse.
-- `text-4xl` und `text-sm` beim `material-symbols-outlined` in Change 5 — die Icon-Größe wird durch `font-size` gesteuert.
+```bash
+#!/usr/bin/execlineb -S0
+s6-svscanctl -t /var/run/s6/services
+```
+
+---
+
+### `haos-addon/rootfs/etc/nginx/conf.d/default.conf`
+
+```nginx
+server {
+    listen 8099;
+    server_name _;
+
+    root /var/www/pupils;
+    index index.html;
+
+    # SvelteKit SPA
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # CouchDB-Proxy — gleiche Origin, kein CORS
+    location /couchdb/ {
+        proxy_pass         http://127.0.0.1:5984/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_read_timeout 60s;
+    }
+}
+```
+
+---
+
+### `haos-addon/rootfs/app/crontab`
+
+```
+0 2 * * * /app/backup.sh
+```
+
+---
+
+### `haos-addon/rootfs/app/backup.sh`
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+set -a
+source /app/backup.env
+set +a
+
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+OUT="/data/backups/pupils-${TS}.json"
+
+echo "=== Backup Start: ${TS} ==="
+
+curl -sf \
+  -u "${COUCHDB_USER}:${COUCHDB_PASSWORD}" \
+  "${COUCHDB_URL}/pupils/_all_docs?include_docs=true" \
+  > "${OUT}"
+
+echo "Dump: ${OUT}"
+
+node -e "
+  const fs = require('fs');
+  const j = JSON.parse(fs.readFileSync('${OUT}', 'utf8'));
+  if (!j.rows || j.rows.length === 0) {
+    console.error('Backup leer oder ungültig!');
+    process.exit(1);
+  }
+  console.log('Docs gesichert:', j.total_rows);
+"
+
+FILEN_OUT=\$(filen \
+  --email "\${FILEN_EMAIL}" \
+  --password "\${FILEN_PASSWORD}" \
+  sync "/data/backups:localToCloud:\${FILEN_REMOTE_DIR}" 2>&1)
+echo "\${FILEN_OUT}"
+if echo "\${FILEN_OUT}" | grep -qi "no such cloud"; then
+  echo "FEHLER: filen-Ordner '\${FILEN_REMOTE_DIR}' existiert nicht!"
+  exit 1
+fi
+
+echo "Upload: OK → \${FILEN_REMOTE_DIR}"
+
+find /data/backups -name 'pupils-*.json' -mtime "+\${BACKUP_RETENTION_DAYS}" -delete
+echo "Retention: Dateien älter als \${BACKUP_RETENTION_DAYS} Tage gelöscht"
+
+echo "=== Backup Ende: OK ==="
+```
+
+---
+
+### App-Änderung: `app/src/routes/setup/+page.svelte` (Zeile 5)
+
+Setup-URL im HAOS-Add-on vorausfüllen (nginx-Proxy, gleiche Origin):
+
+**Alt:**
+```typescript
+let url = $state('');
+```
+
+**Neu:**
+```typescript
+// Im HAOS-Add-on: CouchDB läuft hinter nginx-Proxy auf /couchdb/
+// Im Dev-Modus: bleibt leer (manuelle Eingabe)
+const isHaosAddon = typeof window !== 'undefined' &&
+  !['localhost', '127.0.0.1'].includes(window.location.hostname);
+let url = $state(isHaosAddon ? `${window.location.origin}/couchdb/pupils` : '');
+```
+
+---
+
+### Tests (Session 5a)
+
+**Voraussetzung:** `docker` verfügbar, kein HAOS nötig.
+
+```bash
+cd /home/ma/Antigravity/pupils
+
+# 1. Image bauen (Build-Context = Repo-Root!)
+docker build \
+  --build-arg SUPERCRONIC_ARCH=amd64 \
+  -f haos-addon/Dockerfile \
+  -t pupils-haos-test \
+  .
+
+# 2. options.json für Test erstellen
+mkdir -p /tmp/pupils-test-data
+echo '{
+  "teacher_password": "test1234",
+  "couchdb_password": "admin1234",
+  "filen_email": "test@test.com",
+  "filen_password": "testpw"
+}' > /tmp/pupils-test-data/options.json
+
+# 3. Container starten
+docker run -d --name pupils-haos-test \
+  -p 8099:8099 \
+  -v /tmp/pupils-test-data:/data \
+  pupils-haos-test
+
+# 4. Logs beobachten
+docker logs -f pupils-haos-test
+
+# Erwartete Ausgabe:
+# [init] Konfiguration abgeschlossen.
+# [nginx] Warte auf CouchDB...
+# (nach ~5s) nginx startet
+
+# 5. App erreichbar?
+curl -sf http://localhost:8099 | head -5
+# → HTML der SvelteKit-App
+
+# 6. CouchDB via Proxy erreichbar?
+curl -sf http://localhost:8099/couchdb/
+# → {"couchdb":"Welcome",...}
+
+# 7. Setup-URL vorausfüllt? (im Browser: http://localhost:8099/setup)
+# → URL-Feld zeigt "http://localhost:8099/couchdb/pupils" (oder leer bei localhost)
+
+# 8. Aufräumen
+docker rm -f pupils-haos-test
+```
+
+---
+
+## Session 5b — GitHub CI + HAOS-Deployment (nach lokalem Test)
+
+Session 5b erst starten wenn Session 5a grün ist.
+
+### Was in 5b passiert
+
+1. `repository.yaml` im Repo-Root anlegen (HAOS-Repo-Marker)
+2. GitHub Actions Workflow für Multi-Arch-Build (aarch64 + amd64) → GHCR
+3. `haos-addon/config.yaml` fertigstellen (Image-URL auf GHCR setzen)
+4. Repo public machen auf GitHub
+5. In HAOS (i3 hier, dann Pi der Lehrerin): Repo-URL eintragen → Add-on installieren → testen
+6. Datenmigration vom Dev-Stack in Add-on-CouchDB
+
+### Platzhalter `haos-addon/config.yaml` (wird in 5b vervollständigt)
+
+```yaml
+name: "Yasmins Vocal Lab"
+version: "1.0.0"
+slug: "pupils"
+description: "Schüler-Verwaltung für Gesangslehrerin"
+url: "https://github.com/GITHUB_USER/pupils"
+arch:
+  - aarch64
+  - amd64
+image: "ghcr.io/GITHUB_USER/pupils-haos-addon-{arch}"
+ports:
+  8099/tcp: 8099
+map:
+  - data:rw
+options:
+  teacher_password: "changeme"
+  couchdb_password: "changeme"
+  filen_email: ""
+  filen_password: ""
+schema:
+  teacher_password: "password"
+  couchdb_password: "password"
+  filen_email: "str"
+  filen_password: "password"
+panel_icon: "mdi:microphone"
+panel_title: "Vocal Lab"
+```
+
+---
+
+## Implementierung durch Agent (Session 5a)
+
+Der Agent soll folgende Dateien **anlegen**:
+
+| Datei | Inhalt |
+|---|---|
+| `version.json` | `{"version":"1.0.0"}` |
+| `CHANGELOG.md` | Wie oben |
+| `haos-addon/Dockerfile` | Wie oben |
+| `haos-addon/config.yaml` | Platzhalter wie oben |
+| `haos-addon/rootfs/etc/cont-init.d/10-init.sh` | Wie oben |
+| `haos-addon/rootfs/etc/services.d/couchdb/run` + `finish` | Wie oben |
+| `haos-addon/rootfs/etc/services.d/nginx/run` + `finish` | Wie oben |
+| `haos-addon/rootfs/etc/services.d/cron/run` + `finish` | Wie oben |
+| `haos-addon/rootfs/etc/nginx/conf.d/default.conf` | Wie oben |
+| `haos-addon/rootfs/app/backup.sh` | Wie oben |
+| `haos-addon/rootfs/app/crontab` | `0 2 * * * /app/backup.sh` |
+
+Und **editieren**:
+
+| Datei | Änderung |
+|---|---|
+| `app/src/routes/setup/+page.svelte` Zeile 5 | `url = $state(...)` mit HAOS-Erkennung |
+
+Nach allen Dateioperationen:
+1. `docker build -f haos-addon/Dockerfile --build-arg SUPERCRONIC_ARCH=amd64 -t pupils-haos-test .` ausführen
+2. Bei Fehler: debuggen und fixen
+3. Container starten und Tests aus dem Testabschnitt oben durchführen
+4. Bei Erfolg: `git add` + `git commit` mit Message `feat: HAOS add-on Session 5a — lokaler Build`

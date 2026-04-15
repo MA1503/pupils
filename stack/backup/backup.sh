@@ -25,15 +25,18 @@ node -e "
   console.log('Docs gesichert:', j.total_rows);
 "
 
-# 3. Upload zu filen.io
-# HINWEIS: CLI-Syntax vor Deployment gegen 'filen --help' verifizieren.
-# Fallback-Syntax: filen sync /backups remote:/pupils-backups
-filen \
+# 3. Upload zu filen.io (localToCloud = nur lokale Änderungen hochladen, nichts löschen)
+FILEN_OUT=$(filen \
   --email "${FILEN_EMAIL}" \
   --password "${FILEN_PASSWORD}" \
-  upload "${OUT}" "${FILEN_REMOTE_DIR}/"
+  sync "/backups:localToCloud:${FILEN_REMOTE_DIR}" 2>&1)
+echo "${FILEN_OUT}"
+if echo "${FILEN_OUT}" | grep -qi "no such cloud"; then
+  echo "FEHLER: filen-Zielordner '${FILEN_REMOTE_DIR}' existiert nicht — bitte in filen.io anlegen!"
+  exit 1
+fi
 
-echo "Upload: OK → ${FILEN_REMOTE_DIR}/pupils-${TS}.json"
+echo "Upload: OK → ${FILEN_REMOTE_DIR}"
 
 # 4. Lokale Retention: alte Backups löschen
 find /backups -name 'pupils-*.json' -mtime "+${BACKUP_RETENTION_DAYS}" -delete

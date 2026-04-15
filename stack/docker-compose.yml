@@ -84,6 +84,7 @@ services:
     cap_drop:
       - ALL
     environment:
+      TZ: Europe/Berlin
       COUCHDB_URL: http://couchdb:5984
       COUCHDB_USER: ${COUCHDB_ADMIN_USER}
       COUCHDB_PASSWORD: ${COUCHDB_ADMIN_PASSWORD}
