@@ -54,3 +54,9 @@
 ### Fix: HAOS erkennt Add-on-Updates nicht
 - **Problem:** HAOS bot kein Update an, obwohl neue Version auf GHCR verfügbar. Zwei Ursachen: (1) Fehlende Docker-Labels `io.hass.version` / `io.hass.type` / `io.hass.arch`, die HAOS braucht um die Add-on-Version zu identifizieren. (2) Docker-Cache hat alte Layer wiederverwendet — da sich die SvelteKit-App nicht geändert hat, wurde kein neues Image gebaut und die 1.0.2-Tags zeigten auf den alten 1.0.0-Stand.
 - **Entscheidung:** HAOS-Labels als `LABEL` im Dockerfile hinzugefügt. `BUILD_VERSION` als Build-Arg im CI-Workflow übergeben. Version auf 1.0.3 erhöht um Cache-Bust zu erzwingen.
+
+## v1.0.4 — 2026-04-15
+
+### Fix: HAOS "Add-on aus Repository entfernt"
+- **Problem:** HAOS zeigte Warnung "Die Yasmins Vocal Lab-App wurde aus dem Repository entfernt". Der Add-on-Ordner hieß `haos-addon/`, aber der slug in config.yaml war `pupils`. HAOS identifiziert Add-ons über den Ordnerpfad im Repository und konnte die ursprüngliche Installation nicht mehr zuordnen.
+- **Entscheidung:** Ordner von `haos-addon/` zu `pupils/` umbenannt (slug = Ordnername, wie im HAOS-Beispiel-Repo). Alle Pfade in Dockerfile und CI-Workflow angepasst. Version auf 1.0.4 erhöht.

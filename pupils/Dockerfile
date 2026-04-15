@@ -33,12 +33,11 @@ RUN npm install -g @filen/cli
 COPY --from=app-builder /build/build /var/www/pupils/
 
 # rootfs (nginx config + scripts)
-COPY haos-addon/rootfs/ /
+COPY pupils/rootfs/ /
 
 RUN chmod +x /run.sh /app/backup.sh
 
 ARG BUILD_VERSION
-ARG BUILD_ARCH
 
 LABEL \
   io.hass.version="${BUILD_VERSION}" \

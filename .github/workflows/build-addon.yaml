@@ -36,7 +36,7 @@ jobs:
       - name: Extract version from config.yaml
         id: version
         run: |
-          VERSION=$(grep "^version:" haos-addon/config.yaml | awk '{print $2}' | tr -d '"')
+          VERSION=$(grep "^version:" pupils/config.yaml | awk '{print $2}' | tr -d '"')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "version is: ${VERSION}"
 
@@ -45,14 +45,14 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}
-          file: haos-addon/Dockerfile
+          file: pupils/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
             BUILD_VERSION=${{ steps.version.outputs.version }}
           tags: |
-            ghcr.io/ma1503/pupils-haos-addon:latest
-            ghcr.io/ma1503/pupils-haos-addon:${{ steps.version.outputs.version }}
+            ghcr.io/ma1503/pupils-pupils:latest
+            ghcr.io/ma1503/pupils-pupils:${{ steps.version.outputs.version }}
           cache-from: type=gha,scope=main
           cache-to: type=gha,mode=max,scope=main
 
