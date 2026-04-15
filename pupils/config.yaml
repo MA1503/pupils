@@ -1,5 +1,5 @@
 name: "Yasmins Vocal Lab"
-version: "1.0.6"
+version: "1.0.7"
 slug: "pupils"
 description: "Schüler-Verwaltung für Gesangslehrerin"
 url: "https://github.com/ma1503/pupils"
@@ -9,9 +9,8 @@ arch:
   - amd64
 init: false
 image: "ghcr.io/ma1503/pupils-haos-addon"
-webui: "http://[HOST]:[PORT:8099]"
-ports:
-  8099/tcp: 8099
+ingress: true
+ingress_port: 8099
 panel_icon: "mdi:microphone"
 panel_title: "Vocal Lab"
 startup: "application"

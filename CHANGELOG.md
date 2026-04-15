@@ -66,3 +66,21 @@
 ### Fix: Add-on nicht in HAOS Store sichtbar
 - **Problem:** Nach Umbenennung des Ordners wurde das Add-on im HAOS Store nicht angezeigt. HAOS erwartet standardmäßig `init: true` (s6-overlay-basiertes Init). Da wir s6-overlay entfernt haben und `/run.sh` als ENTRYPOINT nutzen, muss `init: false` gesetzt werden, sonst versucht HAOS `/init` aufzurufen.
 - **Entscheidung:** `init: false` und `startup: "application"` in config.yaml hinzugefügt.
+
+## v1.0.6 — 2026-04-15
+
+### Fix: Falscher GHCR-Image-Name
+- **Problem:** Beim Umbenennen von `haos-addon` → `pupils` wurde `replaceAll` auch im CI-Workflow auf den Image-Namen angewendet, was `pupils-haos-addon` → `pupils-pupils` änderte. HAOS konnte das Image nicht pullen (404).
+- **Entscheidung:** Image-Name korrigiert zu `pupils-haos-addon`. `no-cache: true` im CI-Workflow gesetzt um stale Docker-Cache zu verhindern.
+
+## v1.0.7 — 2026-04-15
+
+### Fix: Sidebar-Ingress mit nginx Path-Stripping
+- **Problem:** HAOS Ingress proxyt die App unter `/api/hassio_ingress/HASH/`. SvelteKit erzeugt absolute Asset-Pfade (`/_app/...`), die im Ingress-Kontext nicht aufgelöst werden → White Screen.
+- **Entscheidung:** nginx rewrite-Regel die den Ingress-Prefix vor dem Servieren entfernt. Die App wird sowohl direkt (Port 8099) als auch via Ingress funktionieren. `ingress: true` und `ingress_port: 8099` in config.yaml.
+
+## v1.0.5 — 2026-04-15
+
+### Fix: Add-on nicht in HAOS Store sichtbar
+- **Problem:** Nach Umbenennung des Ordners wurde das Add-on im HAOS Store nicht angezeigt. HAOS erwartet standardmäßig `init: true` (s6-overlay-basiertes Init). Da wir s6-overlay entfernt haben und `/run.sh` als ENTRYPOINT nutzen, muss `init: false` gesetzt werden, sonst versucht HAOS `/init` aufzurufen.
+- **Entscheidung:** `init: false` und `startup: "application"` in config.yaml hinzugefügt.
