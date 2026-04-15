@@ -60,3 +60,9 @@
 ### Fix: HAOS "Add-on aus Repository entfernt"
 - **Problem:** HAOS zeigte Warnung "Die Yasmins Vocal Lab-App wurde aus dem Repository entfernt". Der Add-on-Ordner hieß `haos-addon/`, aber der slug in config.yaml war `pupils`. HAOS identifiziert Add-ons über den Ordnerpfad im Repository und konnte die ursprüngliche Installation nicht mehr zuordnen.
 - **Entscheidung:** Ordner von `haos-addon/` zu `pupils/` umbenannt (slug = Ordnername, wie im HAOS-Beispiel-Repo). Alle Pfade in Dockerfile und CI-Workflow angepasst. Version auf 1.0.4 erhöht.
+
+## v1.0.5 — 2026-04-15
+
+### Fix: Add-on nicht in HAOS Store sichtbar
+- **Problem:** Nach Umbenennung des Ordners wurde das Add-on im HAOS Store nicht angezeigt. HAOS erwartet standardmäßig `init: true` (s6-overlay-basiertes Init). Da wir s6-overlay entfernt haben und `/run.sh` als ENTRYPOINT nutzen, muss `init: false` gesetzt werden, sonst versucht HAOS `/init` aufzurufen.
+- **Entscheidung:** `init: false` und `startup: "application"` in config.yaml hinzugefügt.
