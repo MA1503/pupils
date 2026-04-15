@@ -2,7 +2,11 @@
   import { goto } from '$app/navigation';
   import { testConnection, saveConfig, startSync } from '$lib/db';
 
-  let url = $state('');
+  // Im HAOS-Add-on: CouchDB läuft hinter nginx-Proxy auf /couchdb/
+  // Im Dev-Modus: bleibt leer (manuelle Eingabe)
+  const isHaosAddon = typeof window !== 'undefined' &&
+    !['localhost', '127.0.0.1'].includes(window.location.hostname);
+  let url = $state(isHaosAddon ? `${window.location.origin}/couchdb/pupils` : '');
   let user = $state('teacher');
   let pass = $state('');
   let error = $state('');
@@ -23,7 +27,7 @@
       } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
         error = 'Server nicht erreichbar. URL prüfen, Tailscale aktiv?';
       } else if (msg.includes('CORS')) {
-        error = 'CORS-Fehler. CouchDB CORS-Einstellung prüfen (00-setup.sh ausgeführt?).';
+        error = 'CORS-Fehler. CouchDB CORS-Einstellung prüfen (10-init.sh ausgeführt?).';
       } else {
         error = msg;
       }
