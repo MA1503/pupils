@@ -54,9 +54,4 @@ jobs:
           cache-from: type=gha,scope=main
           cache-to: type=gha,mode=max,scope=main
 
-      - name: Generate artifact attestation
-        if: github.event_name != 'pull_request'
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: ghcr.io/ma1503/pupils-haos-addon
-          subject-digest: ${{ steps.build.outputs.digest }}
+
