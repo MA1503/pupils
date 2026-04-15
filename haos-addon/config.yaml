@@ -3,6 +3,7 @@ version: "1.0.1"
 slug: "pupils"
 description: "Schüler-Verwaltung für Gesangslehrerin"
 url: "https://github.com/ma1503/pupils"
+changelog: "https://raw.githubusercontent.com/MA1503/pupils/main/CHANGELOG.md"
 arch:
   - aarch64
   - amd64
