@@ -11,18 +11,9 @@ RUN npm run build
 # Stage 2: Runtime
 FROM couchdb:3.3.3
 
-ARG S6_OVERLAY_VERSION=3.2.0.2
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      nginx curl xz-utils ca-certificates nodejs npm jq \
+      nginx curl ca-certificates nodejs npm jq \
     && rm -rf /var/lib/apt/lists/*
-
-# s6-overlay (multi-arch: erkennt Arch automatisch)
-RUN ARCH=$(uname -m) && \
-    curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" \
-      | tar -Jxp -C / && \
-    curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz" \
-      | tar -Jxp -C /
 
 # supercronic (multi-arch: erkennt Arch automatisch)
 RUN ARCH=$(uname -m) && \
@@ -41,15 +32,11 @@ RUN npm install -g @filen/cli
 # Statische App-Dateien aus Stage 1
 COPY --from=app-builder /build/build /var/www/pupils/
 
-# rootfs (Services + Scripts)
+# rootfs (nginx config + scripts)
 COPY haos-addon/rootfs/ /
 
-RUN chmod +x /etc/cont-init.d/10-init.sh \
-    && chmod +x /etc/services.d/couchdb/run /etc/services.d/couchdb/finish \
-    && chmod +x /etc/services.d/nginx/run /etc/services.d/nginx/finish \
-    && chmod +x /etc/services.d/cron/run /etc/services.d/cron/finish \
-    && chmod +x /app/backup.sh
+RUN chmod +x /run.sh /app/backup.sh
 
 EXPOSE 8099
 
-ENTRYPOINT ["/init"]
+ENTRYPOINT ["/run.sh"]

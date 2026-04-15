@@ -1,5 +1,0 @@
-#!/command/with-contenv bash
-set -a
-source /app/backup.env
-set +a
-exec supercronic /app/crontab
