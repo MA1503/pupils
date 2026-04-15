@@ -1,10 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-set -a
-source /app/backup.env
-set +a
-
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 OUT="/data/backups/pupils-${TS}.json"
 

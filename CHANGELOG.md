@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.8 — 2026-04-15
+
+### Fix: Ingress entfernt — UI war nach Install von 1.0.7 gebrochen
+- **Problem:** nginx-Regex-Rewrite für HAOS-Ingress-Pfade funktionierte nicht mit SvelteKit: Assets wurden gegen `homeassistant.local:8123/_app/...` statt den Addon-Port aufgelöst → White Screen.
+- **Entscheidung:** `ingress: false` + `webui`-Link (direkter Port 8099). Kein Sidebar-Panel, aber stabiler „Open Web UI"-Button in der Add-on-Seite.
+
+### Security-Fixes
+- **Supercronic SHA-Verifikation:** SHA1-Check nach Download für amd64 + arm64 (GLM-5 Finding 3)
+- **backup.env entfernt:** Credentials persistieren nicht mehr im Container-FS — HAOS-Env-Vars werden direkt an `backup.sh` weitergereicht (Finding 2)
+- **nginx server_tokens off:** Versionsinformation im Server-Header unterdrückt (Finding 5)
+
 ## v1.0.0 — 2026-04-15
 
 ### MVP

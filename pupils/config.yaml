@@ -1,5 +1,5 @@
 name: "Yasmins Vocal Lab"
-version: "1.0.7"
+version: "1.0.8"
 slug: "pupils"
 description: "Schüler-Verwaltung für Gesangslehrerin"
 url: "https://github.com/ma1503/pupils"
@@ -9,8 +9,9 @@ arch:
   - amd64
 init: false
 image: "ghcr.io/ma1503/pupils-haos-addon"
-ingress: true
-ingress_port: 8099
+ports:
+  8099/tcp: 8099
+webui: "http://[HOST]:[PORT:8099]"
 panel_icon: "mdi:microphone"
 panel_title: "Vocal Lab"
 startup: "application"
@@ -19,6 +20,11 @@ map:
 environment:
   COUCHDB_USER: admin
   COUCHDB_PASSWORD: "{{couchdb_password}}"
+  FILEN_EMAIL: "{{filen_email}}"
+  FILEN_PASSWORD: "{{filen_password}}"
+  COUCHDB_URL: "http://127.0.0.1:5984"
+  FILEN_REMOTE_DIR: "/pupils-backups"
+  BACKUP_RETENTION_DAYS: "30"
 options:
   teacher_password: "changeme"
   couchdb_password: "changeme"

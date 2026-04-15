@@ -11,12 +11,11 @@ set -euo pipefail
 OPTIONS=/data/options.json
 
 # --- Read & validate config from HAOS supervisor ---
+# Credentials come as env vars (set via config.yaml environment block by HAOS supervisor)
+# TEACHER_PASSWORD is only in options.json, not needed as env var for backup
 TEACHER_PASSWORD=$(jq -r '.teacher_password // empty' "${OPTIONS}")
-COUCHDB_PASSWORD=$(jq -r '.couchdb_password // empty' "${OPTIONS}")
-FILEN_EMAIL=$(jq -r '.filen_email // ""' "${OPTIONS}")
-FILEN_PASSWORD=$(jq -r '.filen_password // ""' "${OPTIONS}")
 
-if [[ -z "${TEACHER_PASSWORD}" ]] || [[ -z "${COUCHDB_PASSWORD}" ]]; then
+if [[ -z "${TEACHER_PASSWORD}" ]] || [[ -z "${COUCHDB_PASSWORD:-}" ]]; then
   echo "[init] FEHLER: teacher_password und couchdb_password müssen gesetzt sein!"
   exit 1
 fi
@@ -41,17 +40,6 @@ EOF
 chown -R couchdb:couchdb /data/couchdb-data
 chmod 755 /data/couchdb-data
 chmod 755 /data/backups
-
-# --- Backup-Umgebungsvariaten ---
-cat > /app/backup.env << EOF
-COUCHDB_URL=http://127.0.0.1:5984
-COUCHDB_USER=admin
-COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
-FILEN_EMAIL=${FILEN_EMAIL}
-FILEN_PASSWORD=${FILEN_PASSWORD}
-FILEN_REMOTE_DIR=/pupils-backups
-BACKUP_RETENTION_DAYS=30
-EOF
 
 echo "[init] Konfiguration abgeschlossen."
 
