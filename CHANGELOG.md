@@ -38,3 +38,13 @@
 ### Fix: Sidebar-Ingress
 - **Problem:** Add-on erschien nicht in der HAOS-Sidebar.
 - **Entscheidung:** `ingress: true` und `ingress_port: 8099` in config.yaml hinzugefügt, `ports`-Zeile entfernt (Ingress übernimmt die Port-Zuweisung).
+
+## v1.0.2 — 2026-04-15
+
+### Fix: White Screen mit HAOS Ingress
+- **Problem:** Mit `ingress: true` wurde die SvelteKit-App über `/api/hassio_ingress/[HASH]/` erreichbar. Browser-Cache lieferte `index.html` korrekt, aber alle JS/CSS-Dateien (`/_app/immutable/...`) wurden mit 404 beantwortet. Grund: `<base href="/">` im SvelteKit-Build resolviert relative Pfade gegen den Domain-Root statt gegen den Ingress-Pfad-Prefix. HAOS Ingress versteht SvelteKit's statische Asset-Pfade nicht.
+- **Entscheidung:** Ingress entfernt, App direkt über Port 8099 zugreifbar. `webui`-Feld hinzugefügt ("Open Web UI" Link in Sidebar). Kein inline-Panel in Sidebar, aber die App funktioniert zuverlässig.
+
+### Fix: Changelog in HAOS
+- **Problem:** `No changelog found for app 7da1d1ca_pupils!` — HAOS erwartet eine Changelog-URL in der config.yaml.
+- **Entscheidung:** `changelog`-Feld hinzugefügt, zeigt auf `CHANGELOG.md` im Repository (raw GitHub URL).
