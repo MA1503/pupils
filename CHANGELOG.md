@@ -35,15 +35,15 @@
 - **Problem:** `actions/attest-build-provenance@v1` braucht OIDC `id-token: write` Permission, die nicht verfügbar war.
 - **Entscheidung:** Attestation entfernt — nicht nötig für unser Use-Case.
 
-### Fix: Sidebar-Ingress
+### Fix: Sidebar-Ingress (erste Version)
 - **Problem:** Add-on erschien nicht in der HAOS-Sidebar.
-- **Entscheidung:** `ingress: true` und `ingress_port: 8099` in config.yaml hinzugefügt, `ports`-Zeile entfernt (Ingress übernimmt die Port-Zuweisung).
+- **Entscheidung:** `ingress: true` und `ingress_port: 8099` in config.yaml hinzugefügt.
 
 ## v1.0.2 — 2026-04-15
 
 ### Fix: White Screen mit HAOS Ingress
-- **Problem:** Mit `ingress: true` wurde die SvelteKit-App über `/api/hassio_ingress/[HASH]/` erreichbar. Browser-Cache lieferte `index.html` korrekt, aber alle JS/CSS-Dateien (`/_app/immutable/...`) wurden mit 404 beantwortet. Grund: `<base href="/">` im SvelteKit-Build resolviert relative Pfade gegen den Domain-Root statt gegen den Ingress-Pfad-Prefix. HAOS Ingress versteht SvelteKit's statische Asset-Pfade nicht.
-- **Entscheidung:** Ingress entfernt, App direkt über Port 8099 zugreifbar. `webui`-Feld hinzugefügt ("Open Web UI" Link in Sidebar). Kein inline-Panel in Sidebar, aber die App funktioniert zuverlässig.
+- **Problem:** Mit `ingress: true` wurde die SvelteKit-App über `/api/hassio_ingress/[HASH]/` erreichbar. Alle JS/CSS-Dateien (`/_app/immutable/...`) wurden mit 404 beantwortet, weil SvelteKit absolute Pfade erzeugt die nicht hinter dem Ingress-Prefix aufgelöst werden.
+- **Entscheidung:** Ingress entfernt, App direkt über Port 8099 zugreifbar. `webui`-Feld hinzugefügt ("Open Web UI" Link in Sidebar).
 
 ### Fix: Changelog in HAOS
 - **Problem:** `No changelog found for app 7da1d1ca_pupils!` — HAOS erwartet eine Changelog-URL in der config.yaml.
@@ -52,35 +52,29 @@
 ## v1.0.3 — 2026-04-15
 
 ### Fix: HAOS erkennt Add-on-Updates nicht
-- **Problem:** HAOS bot kein Update an, obwohl neue Version auf GHCR verfügbar. Zwei Ursachen: (1) Fehlende Docker-Labels `io.hass.version` / `io.hass.type` / `io.hass.arch`, die HAOS braucht um die Add-on-Version zu identifizieren. (2) Docker-Cache hat alte Layer wiederverwendet — da sich die SvelteKit-App nicht geändert hat, wurde kein neues Image gebaut und die 1.0.2-Tags zeigten auf den alten 1.0.0-Stand.
-- **Entscheidung:** HAOS-Labels als `LABEL` im Dockerfile hinzugefügt. `BUILD_VERSION` als Build-Arg im CI-Workflow übergeben. Version auf 1.0.3 erhöht um Cache-Bust zu erzwingen.
+- **Problem:** HAOS bot kein Update an. Zwei Ursachen: (1) Fehlende Docker-Labels `io.hass.version` / `io.hass.type` / `io.hass.arch`. (2) Docker-Cache hat alte Layer wiederverwendet.
+- **Entscheidung:** HAOS-Labels als `LABEL` im Dockerfile hinzugefügt. `BUILD_VERSION` als Build-Arg im CI-Workflow. Version auf 1.0.3 erhöht für Cache-Bust.
 
 ## v1.0.4 — 2026-04-15
 
 ### Fix: HAOS "Add-on aus Repository entfernt"
-- **Problem:** HAOS zeigte Warnung "Die Yasmins Vocal Lab-App wurde aus dem Repository entfernt". Der Add-on-Ordner hieß `haos-addon/`, aber der slug in config.yaml war `pupils`. HAOS identifiziert Add-ons über den Ordnerpfad im Repository und konnte die ursprüngliche Installation nicht mehr zuordnen.
-- **Entscheidung:** Ordner von `haos-addon/` zu `pupils/` umbenannt (slug = Ordnername, wie im HAOS-Beispiel-Repo). Alle Pfade in Dockerfile und CI-Workflow angepasst. Version auf 1.0.4 erhöht.
+- **Problem:** HAOS zeigte Warnung "App wurde aus dem Repository entfernt". Add-on-Ordner hieß `haos-addon/`, slug war `pupils`. HAOS identifiziert Add-ons über den Ordnerpfad.
+- **Entscheidung:** Ordner von `haos-addon/` zu `pupils/` umbenannt (slug = Ordnername). Alle Pfade in Dockerfile und CI-Workflow angepasst.
 
-## v1.0.5 — 2026-04-15
+## v1.0.5 — 2026-04-15 (aktuell installiert und funktionsfähig)
 
 ### Fix: Add-on nicht in HAOS Store sichtbar
-- **Problem:** Nach Umbenennung des Ordners wurde das Add-on im HAOS Store nicht angezeigt. HAOS erwartet standardmäßig `init: true` (s6-overlay-basiertes Init). Da wir s6-overlay entfernt haben und `/run.sh` als ENTRYPOINT nutzen, muss `init: false` gesetzt werden, sonst versucht HAOS `/init` aufzurufen.
-- **Entscheidung:** `init: false` und `startup: "application"` in config.yaml hinzugefügt.
-
-## v1.0.6 — 2026-04-15
+- **Problem:** Nach Umbenennung des Ordners wurde das Add-on nicht im Store angezeigt. HAOS erwartet `init: true` (s6-overlay) als Default. Ohne s6-overlay muss `init: false` gesetzt werden. Außerdem war das `webui`-Format falsch (`http://[HOST]:8099` statt `http://[HOST]:[PORT:8099]`), was HAOS komplett ignorierte.
+- **Entscheidung:** `init: false`, `startup: "application"`, korrektes `webui`-Format.
 
 ### Fix: Falscher GHCR-Image-Name
-- **Problem:** Beim Umbenennen von `haos-addon` → `pupils` wurde `replaceAll` auch im CI-Workflow auf den Image-Namen angewendet, was `pupils-haos-addon` → `pupils-pupils` änderte. HAOS konnte das Image nicht pullen (404).
-- **Entscheidung:** Image-Name korrigiert zu `pupils-haos-addon`. `no-cache: true` im CI-Workflow gesetzt um stale Docker-Cache zu verhindern.
-
-## v1.0.7 — 2026-04-15
+- **Problem:** Beim Umbenennen von `haos-addon` → `pupils` wurde `replaceAll` auch auf den Image-Namen angewendet: `pupils-haos-addon` → `pupils-pupils`. HAOS konnte das Image nicht pullen (404).
+- **Entscheidung:** Image-Name korrigiert zu `pupils-haos-addon`. `no-cache: true` im CI-Workflow gesetzt.
 
 ### Fix: Sidebar-Ingress mit nginx Path-Stripping
-- **Problem:** HAOS Ingress proxyt die App unter `/api/hassio_ingress/HASH/`. SvelteKit erzeugt absolute Asset-Pfade (`/_app/...`), die im Ingress-Kontext nicht aufgelöst werden → White Screen.
-- **Entscheidung:** nginx rewrite-Regel die den Ingress-Prefix vor dem Servieren entfernt. Die App wird sowohl direkt (Port 8099) als auch via Ingress funktionieren. `ingress: true` und `ingress_port: 8099` in config.yaml.
+- **Problem:** HAOS Ingress proxyt unter `/api/hassio_ingress/HASH/`. SvelteKit erzeugt absolute Asset-Pfade (`/_app/...`) die im Ingress-Kontext nicht aufgelöst werden → White Screen.
+- **Entscheidung:** nginx rewrite-Regel die den Ingress-Prefix vor dem Servieren entfernt. App funktioniert direkt und via Ingress. `ingress: true` und `ingress_port: 8099` in config.yaml.
 
-## v1.0.5 — 2026-04-15
-
-### Fix: Add-on nicht in HAOS Store sichtbar
-- **Problem:** Nach Umbenennung des Ordners wurde das Add-on im HAOS Store nicht angezeigt. HAOS erwartet standardmäßig `init: true` (s6-overlay-basiertes Init). Da wir s6-overlay entfernt haben und `/run.sh` als ENTRYPOINT nutzen, muss `init: false` gesetzt werden, sonst versucht HAOS `/init` aufzurufen.
-- **Entscheidung:** `init: false` und `startup: "application"` in config.yaml hinzugefügt.
+### Fix: Pausierte Schüler nicht sichtbar
+- **Problem:** Pausierte Schüler wurden aus der Liste gefiltert und waren weder sichtbar noch wieder aktivierbar.
+- **Entscheidung:** `listStudents()` bekommt `includeArchived`-Parameter (Default: `false`). Auge-Button in der Schülerliste zum Ein-/Ausblenden pausierter Schüler.
