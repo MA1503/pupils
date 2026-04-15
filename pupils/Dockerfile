@@ -1,7 +1,9 @@
 # Build-Context: Repo-Root (damit app/ erreichbar ist)
 
-# Stage 1: SvelteKit bauen
-FROM node:20-alpine AS app-builder
+# Stage 1: SvelteKit bauen (immer nativ amd64 — statische Dateien sind arch-unabhängig,
+# verhindert QEMU-Deadlock bei npm ci unter emuliertem arm64)
+# hadolint ignore=DL3029
+FROM --platform=linux/amd64 node:20-alpine AS app-builder
 WORKDIR /build
 COPY app/package*.json ./
 RUN npm ci
