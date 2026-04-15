@@ -13,7 +13,7 @@ async function putLatest<T extends { _id: string; _rev?: string }>(
 
 // ---- Students ----
 
-export async function listStudents(): Promise<Student[]> {
+export async function listStudents(includeArchived = false): Promise<Student[]> {
   const result = await getLocal().allDocs<Student>({
     startkey: 'student:',
     endkey: 'student:\ufff0',
@@ -21,7 +21,7 @@ export async function listStudents(): Promise<Student[]> {
   });
   return result.rows
     .map(r => r.doc!)
-    .filter(d => !d.archived);
+    .filter(d => includeArchived || !d.archived);
 }
 
 export async function getStudent(id: string): Promise<Student> {

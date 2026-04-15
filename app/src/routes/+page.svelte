@@ -5,11 +5,17 @@
 
   let query = $state('');
   let loading = $state(true);
+  let showArchived = $state(false);
 
   onMount(async () => {
-    students.set(await listStudents());
+    students.set(await listStudents(showArchived));
     loading = false;
   });
+
+  async function toggleArchived() {
+    showArchived = !showArchived;
+    students.set(await listStudents(showArchived));
+  }
 
   const filtered = $derived(searchStudents($sortedStudents, query));
 
@@ -51,6 +57,13 @@
       class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Vertragsbeginn
+    </button>
+    <button
+      onclick={toggleArchived}
+      class="py-3 px-4 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {showArchived ? 'bg-surface-container-highest text-primary border border-primary/40' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+      title={showArchived ? 'Pausierte Schüler ausblenden' : 'Pausierte Schüler einblenden'}
+    >
+      <span class="material-symbols-outlined text-lg align-middle">{showArchived ? 'visibility_off' : 'visibility'}</span>
     </button>
   </div>
 </section>
