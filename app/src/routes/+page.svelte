@@ -42,13 +42,13 @@
   <div class="flex gap-3">
     <button
       onclick={() => toggleSort('name')}
-      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'name' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'name' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Name
     </button>
     <button
       onclick={() => toggleSort('contractStart')}
-      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Vertragsbeginn
     </button>
@@ -95,7 +95,7 @@
 <div class="fixed bottom-24 right-6 z-50">
   <button
     onclick={addStudent}
-    class="editorial-shadow bg-gradient-to-br from-primary to-primary-container text-on-primary-container h-14 pl-5 pr-6 rounded-2xl flex items-center gap-3 active:scale-95 transition-transform duration-200"
+    class="editorial-shadow shadow-primary-lg bg-gradient-to-br from-primary to-primary-container text-on-primary-container h-14 pl-5 pr-6 rounded-2xl flex items-center gap-3 active:scale-95 transition-transform duration-200"
   >
     <span class="material-symbols-outlined font-bold">add</span>
     <span class="font-headline font-extrabold text-sm uppercase tracking-wider">+ Schüler</span>

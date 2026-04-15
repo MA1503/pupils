@@ -416,3 +416,18 @@ input, textarea {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* === Button Elevation === */
+.shadow-primary { box-shadow: 0 4px 16px rgba(255, 139, 161, 0.35); }
+.shadow-primary-lg { box-shadow: 0 8px 24px rgba(255, 139, 161, 0.4); }
+.text-primary-dim { color: var(--primary-dim); }
+.primary-dim { color: var(--primary-dim); }
+.mt-0\.5 { margin-top: 0.125rem; }
+.border-primary\/20 { border-color: rgba(255, 139, 161, 0.2); }
+.-translate-x-1\/2 { transform: translateX(-50%); }
+.z-\[100\] { z-index: 100; }
+.z-\[101\] { z-index: 101; }
+.left-1\/2 { left: 50%; }
+details summary::-webkit-details-marker { display: none; }
+.font-body { font-family: var(--font-body); }
+.cursor-not-allowed { cursor: not-allowed; }

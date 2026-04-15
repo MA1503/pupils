@@ -129,6 +129,15 @@
     editingStudent = false;
   }
 
+  async function toggleArchive() {
+    if (!student) return;
+    const msg = student.archived
+      ? `${student.name} wieder aktivieren?`
+      : `${student.name} pausieren? Der Schüler verschwindet aus der Hauptliste.`;
+    if (!confirm(msg)) return;
+    student = await updateStudent(student, { archived: !student.archived });
+  }
+
   function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
   }
@@ -173,6 +182,20 @@
           placeholder="Tarif (z.B. 30min · 90€/Monat)"
           class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface"
         />
+        <!-- Archiv-Toggle -->
+        <div class="flex items-center justify-between bg-surface-container-low p-4 rounded-xl">
+          <div>
+            <p class="text-sm font-semibold text-on-surface">Status</p>
+            <p class="text-xs text-outline mt-0.5">{student.archived ? 'Pausiert — nicht in Hauptliste' : 'Aktiv'}</p>
+          </div>
+          <button
+            type="button"
+            onclick={toggleArchive}
+            class="px-4 py-2 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {student.archived ? 'bg-primary text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant border border-outline-variant/30'}"
+          >
+            {student.archived ? 'Aktivieren' : 'Pausieren'}
+          </button>
+        </div>
         <div class="flex gap-3 pt-2">
           <button
             onclick={saveStudent}
@@ -320,7 +343,7 @@
     <div class="fixed bottom-24 right-6 z-50">
       <button
         onclick={addEntry}
-        class="flex items-center gap-2 px-6 py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-extrabold rounded-2xl fab-shadow active:scale-90 transition-transform"
+        class="flex items-center gap-2 px-6 py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-extrabold rounded-2xl fab-shadow shadow-primary-lg active:scale-90 transition-transform"
       >
         <span class="material-symbols-outlined font-bold" style="font-variation-settings: 'FILL' 0, 'wght' 700;">add</span>
         <span>HEUTE</span>

@@ -11,6 +11,10 @@
 
 set -euo pipefail
 
+# Temp-File bei Exit/Fehler automatisch löschen (Finding 10)
+TMPFILE="$(mktemp /tmp/pupils-restore-bulk-XXXXXX.json)"
+trap 'rm -f "${TMPFILE}"' EXIT INT TERM
+
 BACKUP_FILE="${1:?Backup-Datei fehlt. Usage: $0 <file.json> [url] [user] [pass]}"
 COUCH_URL="${2:-http://localhost:5984}"
 COUCH_USER="${3:-admin}"
@@ -30,7 +34,7 @@ node -e "
     .filter(d => d && !d._id.startsWith('_design/'))
     .map(d => { const { _rev, ...rest } = d; return rest; });
   const bulk = { docs };
-  fs.writeFileSync('/tmp/pupils-restore-bulk.json', JSON.stringify(bulk));
+  fs.writeFileSync('${TMPFILE}', JSON.stringify(bulk));
   console.log('Dokumente für Restore:', docs.length);
 "
 
@@ -41,12 +45,12 @@ curl -sf -u "${COUCH_USER}:${COUCH_PASS}" -X PUT "${DB_URL}" || true
 RESULT=$(curl -sf -u "${COUCH_USER}:${COUCH_PASS}" \
   -X POST "${DB_URL}/_bulk_docs" \
   -H "Content-Type: application/json" \
-  -d @/tmp/pupils-restore-bulk.json)
+  -d @"${TMPFILE}")
 
 echo "Ergebnis: ${RESULT}" | head -c 200
 echo ""
 
 # Aufräumen
-rm -f /tmp/pupils-restore-bulk.json
+rm -f "${TMPFILE}"
 
 echo "=== Restore abgeschlossen ==="

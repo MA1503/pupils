@@ -17,7 +17,6 @@ services:
     volumes:
       - /mnt/usb/pupils/couchdb-data:/opt/couchdb/data
       - /mnt/usb/pupils/couchdb-config:/opt/couchdb/etc/local.d
-      - ./couchdb/init:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:5984:5984"
     healthcheck:
@@ -29,8 +28,13 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
+        max-size: "5m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
 
   couchdb-setup:
     image: couchdb:3.3.3
@@ -65,6 +69,11 @@ services:
       options:
         max-size: "5m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.5'
 
   backup:
     build: ./backup
@@ -92,3 +101,8 @@ services:
       options:
         max-size: "5m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
