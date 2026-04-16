@@ -282,7 +282,7 @@
               class="ml-1 opacity-70 hover:opacity-100 active:scale-90 transition-all"
               aria-label="Song bearbeiten"
             >
-              <img src="/pencil.png" alt="bearbeiten" class="w-4 h-4" />
+              <img src="/pencil.png" alt="bearbeiten" style="width:16px;height:16px;object-fit:contain;filter:invert(1) opacity(0.7)" />
             </button>
           </div>
         {:else}

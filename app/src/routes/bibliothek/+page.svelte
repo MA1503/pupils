@@ -28,14 +28,17 @@
     {#if songs.length === 0}
       <p class="text-center text-outline-variant py-8">Noch keine Songs in der Bibliothek.</p>
     {:else}
-      <div class="space-y-2">
+      <div class="space-y-4">
         {#each songs as song}
           <a
             href="/s/{song.studentId}?song={songUlid(song)}"
-            class="block bg-surface-container-low p-4 rounded-xl hover:bg-surface-container active:scale-[0.98] transition-all"
+            class="block bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform shadow-primary"
           >
-            <p class="font-headline font-bold text-on-surface">{song.title}</p>
-            <p class="text-xs text-outline-variant mt-0.5">{studentMap.get(song.studentId) ?? '—'}</p>
+            <div>
+              <p class="font-headline font-bold text-on-surface">{song.title}</p>
+              <p class="text-xs text-outline mt-0.5">{studentMap.get(song.studentId) ?? '—'}</p>
+            </div>
+            <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
           </a>
         {/each}
       </div>
