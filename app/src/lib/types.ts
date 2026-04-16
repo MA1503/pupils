@@ -31,6 +31,7 @@ export type Entry = {
   studentId: string;    // "student:<ulid>"
   entryDate: string;    // ISO-Date, default = heute
   text: string;         // Freitext-Notiz
+  remark?: string;      // NEU: optionaler Hinweis
   createdAt: string;
   updatedAt: string;
 };

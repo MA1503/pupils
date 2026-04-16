@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.0.22 — 2026-04-16
+
+### Feature: Hinweis-Feld pro Unterrichtseintrag
+- Optionales zweites Textfeld pro Eintrag. Wenn gefüllt erscheint im Anzeigemodus eine eingebettete Box mit HINWEIS-Label (Primary-Akzent, leicht erhöhter Hintergrund).
+
+### Feature: Bibliothek aktiviert
+- Alle Songs aller Schüler alphabetisch. Klick öffnet Schülerdetail mit dem Song aktiv.
+
+### Refactor: Einstellungen als eigene Seite
+- Profil-Tab entfernt. Einstellungen-Icon in Bottom-Nav öffnet `/einstellungen` statt Overlay.
+
+### Fix: Song-Edit-Button
+- Eigenes pencil.png statt Material-Icon. OK-Button → Häkchen-Icon.
+
 ## v1.0.21 — 2026-04-16
 
 ### Fix: Song-Bearbeiten-Button sichtbar gemacht

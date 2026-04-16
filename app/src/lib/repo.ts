@@ -116,10 +116,11 @@ export async function createEntry(sId: string, studentId: string): Promise<Entry
   return doc;
 }
 
-export async function updateEntry(entry: Entry, text: string, entryDate?: string): Promise<Entry> {
+export async function updateEntry(entry: Entry, text: string, remark?: string, entryDate?: string): Promise<Entry> {
   const updated: Entry = {
     ...entry,
     text,
+    remark: remark !== undefined ? remark : entry.remark,
     entryDate: entryDate ?? entry.entryDate,
     updatedAt: now()
   };
@@ -131,6 +132,20 @@ export async function deleteEntry(entry: Entry): Promise<void> {
   const db = getLocal();
   const latest = await db.get(entry._id);
   await db.remove(entry._id, latest._rev);
+}
+
+// ---- Bibliothek ----
+
+export async function listAllSongs(): Promise<Song[]> {
+  const result = await getLocal().allDocs<Song>({
+    startkey: 'song:',
+    endkey: 'song:\ufff0',
+    include_docs: true
+  });
+  return result.rows
+    .map(r => r.doc!)
+    .filter(d => d && !d.archived)
+    .sort((a, b) => a.title.localeCompare(b.title, 'de'));
 }
 
 // ---- Suche ----

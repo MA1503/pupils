@@ -18,6 +18,7 @@
   let loading = $state(true);
   let editingEntryId = $state<string | null>(null);
   let editingText = $state('');
+  let editingRemark = $state('');
 
   let editName = $state('');
   let editLessonSlot = $state('');
@@ -43,6 +44,11 @@
     try {
       student = await getStudent(id);
       songs = await listSongs(id);
+      const wantedSongUlid = $page.url.searchParams.get('song');
+      if (wantedSongUlid && songs.length > 0) {
+        const idx = songs.findIndex(s => s._id.split(':')[2] === wantedSongUlid);
+        if (idx >= 0) activeSongIndex = idx;
+      }
       if (songs.length > 0) {
         entries = await listEntries(songs[activeSongIndex]._id);
       }
@@ -110,8 +116,8 @@
     entries = [entry, ...entries];
   }
 
-  async function saveEntry(entry: Entry, text: string) {
-    const updated = await updateEntry(entry, text);
+  async function saveEntry(entry: Entry, text: string, remark?: string) {
+    const updated = await updateEntry(entry, text, remark);
     entries = entries.map(e => e._id === updated._id ? updated : e);
   }
 
@@ -123,21 +129,24 @@
   function startEditEntry(entry: Entry) {
     editingEntryId = entry._id;
     editingText = entry.text;
+    editingRemark = entry.remark ?? '';
   }
 
   async function saveEditEntry() {
     if (!editingEntryId) return;
     const entry = entries.find(e => e._id === editingEntryId);
     if (entry) {
-      await saveEntry(entry, editingText);
+      await saveEntry(entry, editingText, editingRemark);
     }
     editingEntryId = null;
     editingText = '';
+    editingRemark = '';
   }
 
   function cancelEditEntry() {
     editingEntryId = null;
     editingText = '';
+    editingRemark = '';
   }
 
   function startEditStudent() {
@@ -270,10 +279,10 @@
             <span class="font-headline font-bold text-sm">{song.title}</span>
             <button
               onclick={startEditSong}
-              class="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 active:scale-90 transition-all"
+              class="ml-1 opacity-70 hover:opacity-100 active:scale-90 transition-all"
               aria-label="Song bearbeiten"
             >
-              <span class="material-symbols-outlined text-[14px]">edit</span>
+              <img src="/pencil.png" alt="bearbeiten" class="w-4 h-4" />
             </button>
           </div>
         {:else}
@@ -300,8 +309,8 @@
           class="flex-1 bg-surface-container-low rounded-lg px-3 py-2 text-on-surface text-sm"
           onkeydown={(e) => e.key === 'Enter' && renameSong()}
         />
-        <button onclick={renameSong} class="px-4 py-2 bg-primary text-on-primary font-headline font-bold text-sm rounded-xl active:scale-95 transition-transform">
-          OK
+        <button onclick={renameSong} class="px-4 py-2 bg-primary text-on-primary rounded-xl active:scale-95 transition-transform" aria-label="Speichern">
+          <span class="material-symbols-outlined text-[20px]">check</span>
         </button>
         <button onclick={removeSong} class="p-2 bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform" aria-label="Song löschen">
           <span class="material-symbols-outlined text-[20px]">delete</span>
@@ -348,6 +357,15 @@
                   placeholder="Notiz schreiben…"
                   class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
                 ></textarea>
+                <label class="block mt-4">
+                  <span class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Hinweis (optional)</span>
+                  <textarea
+                    bind:value={editingRemark}
+                    rows="2"
+                    placeholder="Hausaufgabe, Merksatz, TODO…"
+                    class="w-full mt-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
+                  ></textarea>
+                </label>
                 <div class="flex gap-3 mt-4">
                   <button
                     onclick={saveEditEntry}
@@ -381,6 +399,12 @@
                 <p class="text-on-surface leading-relaxed whitespace-pre-wrap">
                   {entry.text || '(leer — tippen zum Bearbeiten)'}
                 </p>
+                {#if entry.remark}
+                  <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-primary">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2">Hinweis</p>
+                    <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+                  </div>
+                {/if}
               </div>
             {:else}
               <div
@@ -393,6 +417,12 @@
                 <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
                   {entry.text || '(leer — tippen zum Bearbeiten)'}
                 </p>
+                {#if entry.remark}
+                  <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-primary">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2">Hinweis</p>
+                    <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+                  </div>
+                {/if}
               </div>
             {/if}
           </div>
