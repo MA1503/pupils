@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.18 — 2026-04-16
+
+### Fix: Filen-Upload — Rust CLI mit managed rclone statt offiziellem rclone
+- **Problem:** Offizielles rclone Filen-Backend lehnte api_key ab (`Invalid API key`), auch mit exportiertem Key vom neuen Filen-CLI.
+- **Root Cause:** Das rclone-Filen-Backend (`filen-rclone`-Fork von Filen) ist ein anderes Produkt als das offizielle rclone mit Filen-Provider. `export-api-key` ist explizit für "non-managed rclone" — aber das offizielle rclone-Backend hat Bugs mit der API-Key-Auth.
+- **Entscheidung:** Rust Filen CLI (v0.2.5) direkt ins Image, nutzt sein eigenes managed `filen-rclone`. Auth via `--email`/`--password` Flags, kein api_key nötig. `--config-dir /data/filen-cli` für persistenten filen-rclone-Cache über Container-Neustarts.
+- **Aufgeräumt:** rclone, unzip, libsecret-1-0, filen_api_key-Option entfernt. Nur email+password wie vorher.
+
 ## v1.0.17 — 2026-04-16
 
 ### Fix: api_key optional — rclone versucht zunächst mit email+password allein

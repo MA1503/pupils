@@ -21,7 +21,7 @@ if [[ -z "${TEACHER_PASSWORD}" ]] || [[ -z "${COUCHDB_PASSWORD:-}" ]]; then
 fi
 
 # --- CouchDB Konfiguration ---
-mkdir -p /data/couchdb-data /data/backups
+mkdir -p /data/couchdb-data /data/backups /data/filen-cli
 
 mkdir -p /opt/couchdb/etc/local.d
 cat > /opt/couchdb/etc/local.d/local.ini << EOF

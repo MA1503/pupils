@@ -14,7 +14,7 @@ RUN npm run build
 FROM couchdb:3.3.3
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      nginx curl ca-certificates jq unzip \
+      nginx curl ca-certificates jq \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -31,18 +31,17 @@ RUN ARCH=$(uname -m) && \
     echo "${SHA}  /usr/local/bin/supercronic" | sha1sum -c - && \
     chmod +x /usr/local/bin/supercronic
 
-# rclone (≥1.73 für offizielles Filen-Backend — kein Keyring, kein D-Bus)
+# Filen CLI v0.2.5 (Rust — managed rclone, Auth v2, kein Keyring)
+# aarch64: musl-Binary (statisch, kein glibc-Problem auf Bookworm)
 RUN ARCH=$(uname -m) && \
     case "${ARCH}" in \
-      x86_64)  RCLONE_ARCH=amd64 ;; \
-      aarch64) RCLONE_ARCH=arm64 ;; \
+      x86_64)  FILEN_BINARY="filen-cli-0.2.5-x86_64-unknown-linux-gnu" ;; \
+      aarch64) FILEN_BINARY="filen-cli-0.2.5-aarch64-unknown-linux-musl" ;; \
       *) echo "Unsupported arch: ${ARCH}" && exit 1 ;; \
     esac && \
-    curl -fsSLo /tmp/rclone.zip \
-      "https://downloads.rclone.org/rclone-current-linux-${RCLONE_ARCH}.zip" && \
-    unzip -j /tmp/rclone.zip '*/rclone' -d /usr/local/bin/ && \
-    chmod +x /usr/local/bin/rclone && \
-    rm /tmp/rclone.zip
+    curl -fsSLo /usr/local/bin/filen \
+      "https://github.com/FilenCloudDienste/filen-cli-releases/releases/download/0.2.5/${FILEN_BINARY}" && \
+    chmod +x /usr/local/bin/filen
 
 # Statische App-Dateien aus Stage 1
 COPY --from=app-builder /build/build /var/www/pupils/

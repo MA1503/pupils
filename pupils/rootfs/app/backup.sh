@@ -26,39 +26,15 @@ node -e "
 if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]]; then
   echo "Upload: übersprungen (keine Filen-Zugangsdaten gesetzt)"
 else
-  RCLONE_CONF=$(mktemp)
-  chmod 600 "${RCLONE_CONF}"
-  FILEN_PASS_OBF=$(rclone obscure "${FILEN_PASSWORD}")
-
-  # api_key ist optional — rclone versucht ohne, falls nicht gesetzt
-  if [[ -n "${FILEN_API_KEY:-}" ]]; then
-    FILEN_KEY_OBF=$(rclone obscure "${FILEN_API_KEY}")
-    cat > "${RCLONE_CONF}" << RCLONE_EOF
-[filen]
-type = filen
-email = ${FILEN_EMAIL}
-password = ${FILEN_PASS_OBF}
-api_key = ${FILEN_KEY_OBF}
-RCLONE_EOF
-  else
-    cat > "${RCLONE_CONF}" << RCLONE_EOF
-[filen]
-type = filen
-email = ${FILEN_EMAIL}
-password = ${FILEN_PASS_OBF}
-RCLONE_EOF
-  fi
-
-  RCLONE_OUT=0
-  rclone copy /data/backups/ "filen:${FILEN_REMOTE_DIR}" \
-    --config "${RCLONE_CONF}" \
-    --transfers=1 \
-    --verbose 2>&1 || RCLONE_OUT=$?
-
-  rm -f "${RCLONE_CONF}"
-
-  if [[ "${RCLONE_OUT}" -ne 0 ]]; then
-    echo "FEHLER: rclone Upload fehlgeschlagen (exit ${RCLONE_OUT})"
+  FILEN_OUT=0
+  filen \
+    --email "${FILEN_EMAIL}" \
+    --password "${FILEN_PASSWORD}" \
+    --config-dir /data/filen-cli \
+    --skip-update \
+    rclone copy /data/backups/ "filen:${FILEN_REMOTE_DIR}" 2>&1 || FILEN_OUT=$?
+  if [[ "${FILEN_OUT}" -ne 0 ]]; then
+    echo "FEHLER: filen Upload fehlgeschlagen (exit ${FILEN_OUT})"
     exit 1
   fi
   echo "Upload: OK → ${FILEN_REMOTE_DIR}"
