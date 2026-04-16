@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.23 — 2026-04-16
+
+### Fix: Stift-Icon Größe + Bibliothek Card-Styling
+- pencil.png: Inline-Style statt fehlender w-4/h-4 CSS-Klassen; invert-Filter für dunklen Hintergrund
+- Bibliothek: Karten jetzt mit shadow-primary (rosa Shimmer), bg-surface-container-highest, mehr Abstand
+
 ## v1.0.22 — 2026-04-16
 
 ### Feature: Hinweis-Feld pro Unterrichtseintrag
