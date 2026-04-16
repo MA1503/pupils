@@ -270,10 +270,10 @@
             <span class="font-headline font-bold text-sm">{song.title}</span>
             <button
               onclick={startEditSong}
-              class="ml-1 opacity-70 hover:opacity-100 transition-opacity"
+              class="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 active:scale-90 transition-all"
               aria-label="Song bearbeiten"
             >
-              <span class="material-symbols-outlined text-[16px]">edit</span>
+              <span class="material-symbols-outlined text-[14px]">edit</span>
             </button>
           </div>
         {:else}

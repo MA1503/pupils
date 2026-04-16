@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.0.21 — 2026-04-16
+
+### Fix: Song-Bearbeiten-Button sichtbar gemacht
+- **Problem:** Edit-Icon im aktiven Song-Chip hatte keinen Hintergrund und nur 70% Opacity — kaum erkennbar als Button.
+- **Entscheidung:** Kleiner weißer Kreis (`bg-white/20`, `rounded-full`) mit Hover-Feedback. Passt zum Primary-Pill-Design.
+
+## v1.0.20 — 2026-04-16
+
+### Fix: Filen-Upload — Credentials direkt aus options.json lesen
+- **Problem:** HAOS `environment`-Block substituierte `{{filen_email}}`/`{{filen_password}}` nicht korrekt — `backup.sh` bekam die Literal-Strings `{{filen_email}}` statt der echten Zugangsdaten. Debug: `email='{{filen_email}}' pass_len=18` (18 = Länge von `{{filen_password}}`), echtes Passwort hat 15 Zeichen.
+- **Root Cause:** HAOS Template-Substitution in `environment`-Block ist unzuverlässig nach Schema-Änderungen.
+- **Entscheidung:** `backup.sh` liest `filen_email` und `filen_password` jetzt direkt aus `/data/options.json` via `jq` — dasselbe robuste Muster wie `teacher_password` in `run.sh`.
+
+## v1.0.19 — 2026-04-16
+
+### Debug: Filen-Credentials-Diagnose
+- Temporärer Debug-Output in `backup.sh` um HAOS Template-Substitution zu verifizieren.
+- Bestätigt: `{{filen_email}}` wurde literal übergeben. Fix in v1.0.20.
+
 ## v1.0.18 — 2026-04-16
 
 ### Fix: Filen-Upload — Rust CLI mit managed rclone statt offiziellem rclone
