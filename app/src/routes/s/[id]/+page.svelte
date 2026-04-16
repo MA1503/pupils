@@ -3,7 +3,7 @@
   import { page } from '$app/stores';
   import {
     getStudent, updateStudent,
-    listSongs, createSong,
+    listSongs, createSong, updateSong, archiveSong,
     listEntries, createEntry, updateEntry, deleteEntry
   } from '$lib/repo';
   import type { Student, Song, Entry } from '$lib/types';
@@ -23,6 +23,9 @@
   let editLessonSlot = $state('');
   let editContractStart = $state('');
   let editTariff = $state('');
+
+  let editingSong = $state(false);
+  let editSongTitle = $state('');
 
   onMount(async () => {
     if (id === 'new') {
@@ -51,6 +54,7 @@
   });
 
   async function switchSong(idx: number) {
+    editingSong = false;
     activeSongIndex = idx;
     entries = await listEntries(songs[idx]._id);
   }
@@ -70,6 +74,33 @@
       } else {
         throw e;
       }
+    }
+  }
+
+  function startEditSong() {
+    editSongTitle = songs[activeSongIndex].title;
+    editingSong = true;
+  }
+
+  async function renameSong() {
+    if (!editSongTitle.trim()) return;
+    const updated = await updateSong(songs[activeSongIndex], { title: editSongTitle.trim() });
+    songs = songs.map((s, i) => i === activeSongIndex ? updated : s);
+    editingSong = false;
+  }
+
+  async function removeSong() {
+    if (!confirm(`Song "${songs[activeSongIndex].title}" löschen?`)) return;
+    await archiveSong(songs[activeSongIndex]);
+    const remaining = songs.filter((_, i) => i !== activeSongIndex);
+    songs = remaining;
+    editingSong = false;
+    if (remaining.length === 0) {
+      activeSongIndex = 0;
+      entries = [];
+    } else {
+      activeSongIndex = Math.min(activeSongIndex, remaining.length - 1);
+      entries = await listEntries(remaining[activeSongIndex]._id);
     }
   }
 
@@ -234,12 +265,25 @@
     <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4 ml-1">Repertoire</h3>
     <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
       {#each songs as song, i}
-        <button
-          onclick={() => switchSong(i)}
-          class="flex-shrink-0 px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors {i === activeSongIndex ? 'bg-primary text-on-primary-container shadow-lg shadow-primary/20' : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant'}"
-        >
-          {song.title}
-        </button>
+        {#if i === activeSongIndex}
+          <div class="flex-shrink-0 flex items-center gap-1 px-4 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20">
+            <span class="font-headline font-bold text-sm">{song.title}</span>
+            <button
+              onclick={startEditSong}
+              class="ml-1 opacity-70 hover:opacity-100 transition-opacity"
+              aria-label="Song bearbeiten"
+            >
+              <span class="material-symbols-outlined text-[16px]">edit</span>
+            </button>
+          </div>
+        {:else}
+          <button
+            onclick={() => switchSong(i)}
+            class="flex-shrink-0 px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant"
+          >
+            {song.title}
+          </button>
+        {/if}
       {/each}
       <button
         onclick={addSong}
@@ -248,6 +292,25 @@
         <span class="material-symbols-outlined">add</span>
       </button>
     </div>
+
+    {#if editingSong}
+      <div class="mt-3 flex items-center gap-2 bg-surface-container-highest p-3 rounded-xl">
+        <input
+          bind:value={editSongTitle}
+          class="flex-1 bg-surface-container-low rounded-lg px-3 py-2 text-on-surface text-sm"
+          onkeydown={(e) => e.key === 'Enter' && renameSong()}
+        />
+        <button onclick={renameSong} class="px-4 py-2 bg-primary text-on-primary font-headline font-bold text-sm rounded-xl active:scale-95 transition-transform">
+          OK
+        </button>
+        <button onclick={removeSong} class="p-2 bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform" aria-label="Song löschen">
+          <span class="material-symbols-outlined text-[20px]">delete</span>
+        </button>
+        <button onclick={() => editingSong = false} class="p-2 bg-surface-container-low text-on-surface-variant rounded-xl active:scale-95 transition-transform" aria-label="Abbrechen">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+    {/if}
   </section>
 
   <!-- Notiz-Liste (Notes Timeline) -->
@@ -307,9 +370,9 @@
                 </div>
               </div>
             {:else if i === 0}
-              <!-- Active/First entry - styled differently -->
+              <!-- Active/First entry -->
               <div
-                class="bg-surface-container-highest p-6 rounded-2xl shadow-xl shadow-black/20 cursor-pointer hover:bg-surface-container-high transition-colors"
+                class="bg-surface-container-low p-6 rounded-2xl shadow-xl shadow-black/20 cursor-pointer hover:bg-surface-container transition-colors"
                 onclick={() => startEditEntry(entry)}
                 role="button"
                 tabindex="0"
