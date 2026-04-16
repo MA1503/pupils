@@ -433,3 +433,4 @@ input, textarea {
 details summary::-webkit-details-marker { display: none; }
 .font-body { font-family: var(--font-body); }
 .cursor-not-allowed { cursor: not-allowed; }
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

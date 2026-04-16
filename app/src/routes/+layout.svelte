@@ -10,6 +10,8 @@
   let currentPath = $derived($page.url.pathname);
   let settingsOpen = $state(false);
   let config = $state<{ url: string; user: string } | null>(null);
+  let backupRunning = $state(false);
+  let backupResult = $state<{ ok: boolean; log: string } | null>(null);
 
   onMount(() => {
     const cfg = loadConfig();
@@ -28,6 +30,25 @@
   function isActive(path: string): boolean {
     if (path === '/') return currentPath === '/' || currentPath.startsWith('/s/');
     return currentPath.startsWith(path);
+  }
+
+  async function runBackup() {
+    const cfg = loadConfig();
+    if (!cfg) return;
+    backupRunning = true;
+    backupResult = null;
+    try {
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { Authorization: 'Basic ' + btoa(`${cfg.user}:${cfg.pass}`) },
+        signal: AbortSignal.timeout(300_000)
+      });
+      backupResult = { ok: res.ok, log: await res.text() };
+    } catch (e) {
+      backupResult = { ok: false, log: `Fehler: ${e instanceof Error ? e.message : String(e)}` };
+    } finally {
+      backupRunning = false;
+    }
   }
 </script>
 
@@ -103,5 +124,20 @@
     >
       Verbindung ändern
     </button>
+
+    <button
+      onclick={runBackup}
+      disabled={backupRunning}
+      class="w-full mt-3 py-4 bg-surface-container-highest text-on-surface font-headline font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
+    >
+      {backupRunning ? 'Backup läuft…' : 'Backup jetzt starten'}
+    </button>
+
+    {#if backupResult}
+      <div class="mt-4 p-4 rounded-xl {backupResult.ok ? 'bg-primary/10 text-primary' : 'bg-error-container text-on-error-container'}">
+        <p class="font-headline font-bold text-sm mb-2">{backupResult.ok ? 'Backup erfolgreich' : 'Backup fehlgeschlagen'}</p>
+        <pre class="text-xs font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">{backupResult.log}</pre>
+      </div>
+    {/if}
   </div>
 {/if}

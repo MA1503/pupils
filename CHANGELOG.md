@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.13 — 2026-04-16
+
+### Feature: Backup-Trigger-Button in den App-Einstellungen
+- **Problem:** HAOS-Container sind aus der SSH-Shell nicht ohne weiteres erreichbar — Backup-Verifikation ging nur via Nacht-Cron + Log-Check am nächsten Tag.
+- **Entscheidung:** Neuer Button "Backup jetzt starten" im Einstellungen-Bottom-Sheet, der denselben `/app/backup.sh` anstößt wie supercronic. Output (Erfolg/Fehler + Log) wird direkt in der UI angezeigt.
+- **Architektur:** Mini-Node.js-HTTP-Server (`api.js`) auf `127.0.0.1:9000`, gestartet aus `run.sh`. nginx proxied `/api/backup` weiter. Auth via Basic-Auth gegen CouchDB (`teacher`-User).
+- **Concurrency:** Lockfile `/tmp/backup-running.lock` verhindert parallele Runs (HTTP 409). Stale-Lock-Erkennung beim Start.
+- **Security:** api.js bindet auf `127.0.0.1`, Auth vor Lock/Spawn, kein User-Input an Shell, `try/finally` für Lockfile-Cleanup.
+
 ## v1.0.12 — 2026-04-16
 
 ### Fix: UI — doppeltes `+` beim FAB-Button + Letzter Eintrag unter Button verdeckt

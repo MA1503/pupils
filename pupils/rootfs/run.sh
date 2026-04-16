@@ -76,6 +76,10 @@ echo "[run] DB und Users konfiguriert."
 supercronic /app/crontab &
 echo "[run] Backup-Cron gestartet."
 
+# --- Mini-API für manuellen Backup-Trigger ---
+node /app/api.js &
+echo "[run] Backup-API gestartet (intern 9000)."
+
 # --- nginx im Vordergrund starten ---
 # nginx wird zum Hauptprozess — wenn er stirbt, stirbt der Container.
 # CouchDB und supercronic laufen als Kinder und sterben mit.
