@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.14 — 2026-04-16
+
+### Fix: Filen CLI auf @latest aktualisiert
+- **Problem:** Filen CLI v0.0.30 im Image war veraltet (aktuell: v0.0.39). Upload schlug mit "Invalid credentials!" fehl — vermutlich Auth-Protokoll-Änderung server-seitig.
+- **Entscheidung:** `npm install -g @filen/cli@latest` im Dockerfile, damit beim Build immer die aktuelle Version gezogen wird.
+
 ## v1.0.13 — 2026-04-16
 
 ### Feature: Backup-Trigger-Button in den App-Einstellungen

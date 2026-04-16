@@ -32,7 +32,7 @@ RUN ARCH=$(uname -m) && \
     chmod +x /usr/local/bin/supercronic
 
 # filen CLI
-RUN npm install -g @filen/cli
+RUN npm install -g @filen/cli@latest
 
 # Statische App-Dateien aus Stage 1
 COPY --from=app-builder /build/build /var/www/pupils/
