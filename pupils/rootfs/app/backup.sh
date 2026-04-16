@@ -26,6 +26,7 @@ node -e "
 if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]]; then
   echo "Upload: übersprungen (keine Filen-Zugangsdaten gesetzt)"
 else
+  echo "DEBUG: email='${FILEN_EMAIL}' pass_len=${#FILEN_PASSWORD}"
   FILEN_OUT=0
   filen \
     --email "${FILEN_EMAIL}" \
