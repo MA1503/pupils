@@ -4,6 +4,10 @@ set -euo pipefail
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 OUT="/data/backups/pupils-${TS}.json"
 
+# Filen-Credentials direkt aus options.json lesen (robust gegen HAOS-Template-Substitution)
+FILEN_EMAIL=$(jq -r '.filen_email // empty' /data/options.json)
+FILEN_PASSWORD=$(jq -r '.filen_password // empty' /data/options.json)
+
 echo "=== Backup Start: ${TS} ==="
 
 curl -sf \
@@ -26,7 +30,6 @@ node -e "
 if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]]; then
   echo "Upload: übersprungen (keine Filen-Zugangsdaten gesetzt)"
 else
-  echo "DEBUG: email='${FILEN_EMAIL}' pass_len=${#FILEN_PASSWORD}"
   FILEN_OUT=0
   filen \
     --email "${FILEN_EMAIL}" \
