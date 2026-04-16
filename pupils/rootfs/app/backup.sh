@@ -23,20 +23,31 @@ node -e "
   console.log('Docs gesichert:', j.total_rows);
 "
 
-if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]] || [[ -z "${FILEN_API_KEY:-}" ]]; then
-  echo "Upload: übersprungen (FILEN_EMAIL, FILEN_PASSWORD und FILEN_API_KEY müssen alle gesetzt sein)"
+if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]]; then
+  echo "Upload: übersprungen (keine Filen-Zugangsdaten gesetzt)"
 else
   RCLONE_CONF=$(mktemp)
   chmod 600 "${RCLONE_CONF}"
   FILEN_PASS_OBF=$(rclone obscure "${FILEN_PASSWORD}")
-  FILEN_KEY_OBF=$(rclone obscure "${FILEN_API_KEY}")
-  cat > "${RCLONE_CONF}" << RCLONE_EOF
+
+  # api_key ist optional — rclone versucht ohne, falls nicht gesetzt
+  if [[ -n "${FILEN_API_KEY:-}" ]]; then
+    FILEN_KEY_OBF=$(rclone obscure "${FILEN_API_KEY}")
+    cat > "${RCLONE_CONF}" << RCLONE_EOF
 [filen]
 type = filen
 email = ${FILEN_EMAIL}
 password = ${FILEN_PASS_OBF}
 api_key = ${FILEN_KEY_OBF}
 RCLONE_EOF
+  else
+    cat > "${RCLONE_CONF}" << RCLONE_EOF
+[filen]
+type = filen
+email = ${FILEN_EMAIL}
+password = ${FILEN_PASS_OBF}
+RCLONE_EOF
+  fi
 
   RCLONE_OUT=0
   rclone copy /data/backups/ "filen:${FILEN_REMOTE_DIR}" \
