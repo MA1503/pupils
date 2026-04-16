@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.12 — 2026-04-16
+
+### Fix: UI — doppeltes `+` beim FAB-Button + Letzter Eintrag unter Button verdeckt
+- **Problem 1:** Schüler-FAB zeigte `+ + Schüler` (Material-Icon `add` + Text `+ Schüler`). Text auf `Schüler` gekürzt.
+- **Problem 2:** Letzter Stundenprotokoll-Eintrag wurde vom `+ Heute`-Button überdeckt. `pb-32` zur Notizen-Section hinzugefügt.
+
 ## v1.0.11 — 2026-04-16
 
 ### Fix: Zeilenumbrüche in Notizen (fehlende CSS-Klasse)

@@ -111,6 +111,6 @@
     class="editorial-shadow shadow-primary-lg bg-gradient-to-br from-primary to-primary-container text-on-primary-container h-14 pl-5 pr-6 rounded-2xl flex items-center gap-3 active:scale-95 transition-transform duration-200"
   >
     <span class="material-symbols-outlined font-bold">add</span>
-    <span class="font-headline font-extrabold text-sm uppercase tracking-wider">+ Schüler</span>
+    <span class="font-headline font-extrabold text-sm uppercase tracking-wider">Schüler</span>
   </button>
 </div>

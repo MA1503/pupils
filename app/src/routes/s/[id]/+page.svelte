@@ -251,7 +251,7 @@
   </section>
 
   <!-- Notiz-Liste (Notes Timeline) -->
-  <section>
+  <section class="pb-32">
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold ml-1">Stundenprotokoll</h3>
       <div class="h-[1px] flex-grow ml-4 bg-outline-variant/20"></div>
