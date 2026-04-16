@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.11 — 2026-04-16
+
+### Fix: Zeilenumbrüche in Notizen (fehlende CSS-Klasse)
+- **Problem:** `whitespace-pre-wrap` wurde in der Vorlage gesetzt, existierte aber nicht in `app.css` (kein Tailwind-Build, sondern handgeschriebene Utility-Klassen).
+- **Entscheidung:** `.whitespace-pre-wrap { white-space: pre-wrap; }` in `app.css` hinzugefügt.
+
 ## v1.0.10 — 2026-04-16
 
 ### Fix: Node 18 → 20 — Filen CLI lief nicht auf Pi
