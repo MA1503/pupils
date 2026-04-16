@@ -14,7 +14,7 @@ RUN npm run build
 FROM couchdb:3.3.3
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      nginx curl ca-certificates jq \
+      nginx curl ca-certificates jq libsecret-1-0 \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -31,8 +31,8 @@ RUN ARCH=$(uname -m) && \
     echo "${SHA}  /usr/local/bin/supercronic" | sha1sum -c - && \
     chmod +x /usr/local/bin/supercronic
 
-# filen CLI
-RUN npm install -g @filen/cli@latest
+# filen CLI (0.0.36: neue SDK v0.3.x, keytar statt node-keyring — Bookworm-kompatibel)
+RUN npm install -g @filen/cli@0.0.36
 
 # Statische App-Dateien aus Stage 1
 COPY --from=app-builder /build/build /var/www/pupils/

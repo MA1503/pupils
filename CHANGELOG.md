@@ -1,10 +1,15 @@
 # Changelog
 
+## v1.0.15 — 2026-04-16
+
+### Fix: Filen CLI auf v0.0.36 gepinnt + libsecret
+- **Problem:** v0.0.30 (alte SDK v0.1.x) → "Invalid credentials" wegen Filen API-Änderung. v0.0.39 (@latest) → Crash wegen `@jupiterpi/node-keyring` braucht glibc 2.38+, Bookworm hat 2.36.
+- **Entscheidung:** v0.0.36 gepinnt (SDK v0.3.x, nutzt `keytar` statt `node-keyring`). `libsecret-1-0` ins Image für keytar-Runtime.
+
 ## v1.0.14 — 2026-04-16
 
-### Fix: Filen CLI auf @latest aktualisiert
-- **Problem:** Filen CLI v0.0.30 im Image war veraltet (aktuell: v0.0.39). Upload schlug mit "Invalid credentials!" fehl — vermutlich Auth-Protokoll-Änderung server-seitig.
-- **Entscheidung:** `npm install -g @filen/cli@latest` im Dockerfile, damit beim Build immer die aktuelle Version gezogen wird.
+### Fix: Filen CLI auf @latest aktualisiert (rückgängig gemacht in v1.0.15)
+- @latest war v0.0.39 — crashte mit glibc-Inkompatibilität.
 
 ## v1.0.13 — 2026-04-16
 
