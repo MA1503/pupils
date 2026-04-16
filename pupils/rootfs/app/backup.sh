@@ -23,17 +23,20 @@ node -e "
   console.log('Docs gesichert:', j.total_rows);
 "
 
-FILEN_OUT=$(filen \
-  --email "${FILEN_EMAIL}" \
-  --password "${FILEN_PASSWORD}" \
-  sync "/data/backups:localToCloud:${FILEN_REMOTE_DIR}" 2>&1)
-echo "${FILEN_OUT}"
-if echo "${FILEN_OUT}" | grep -qi "no such cloud"; then
-  echo "FEHLER: filen-Ordner '${FILEN_REMOTE_DIR}' existiert nicht!"
-  exit 1
+if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]]; then
+  echo "Upload: übersprungen (keine Filen-Zugangsdaten gesetzt)"
+else
+  FILEN_OUT=$(filen \
+    --email "${FILEN_EMAIL}" \
+    --password "${FILEN_PASSWORD}" \
+    sync "/data/backups:localToCloud:${FILEN_REMOTE_DIR}" 2>&1)
+  echo "${FILEN_OUT}"
+  if echo "${FILEN_OUT}" | grep -qi "no such cloud"; then
+    echo "FEHLER: filen-Ordner '${FILEN_REMOTE_DIR}' existiert nicht!"
+    exit 1
+  fi
+  echo "Upload: OK → ${FILEN_REMOTE_DIR}"
 fi
-
-echo "Upload: OK → ${FILEN_REMOTE_DIR}"
 
 find /data/backups -name 'pupils-*.json' -mtime "+${BACKUP_RETENTION_DAYS}" -delete
 echo "Retention: Dateien älter als ${BACKUP_RETENTION_DAYS} Tage gelöscht"

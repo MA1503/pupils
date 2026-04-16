@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.9 — 2026-04-16
+
+### Fix: Backup schlägt fehl wenn Filen-Zugangsdaten nicht gesetzt
+- **Problem:** `backup.sh` lief mit `set -e` und brach bei leerem `FILEN_EMAIL`/`FILEN_PASSWORD` sofort ab — auch der lokale CouchDB-Dump war damit verloren.
+- **Entscheidung:** Filen-Upload wird übersprungen wenn keine Zugangsdaten gesetzt. Der lokale Dump in `/data/backups/` wird immer erstellt.
+
+### Fix: Zeilenumbrüche in Unterrichtsnotizen
+- **Problem:** Tailwind setzt `white-space: normal` per Default — Zeilenumbrüche aus dem Textarea wurden in der Anzeige ignoriert.
+- **Entscheidung:** `whitespace-pre-wrap` zu den Notiz-`<p>`-Tags in der Schülerdetailseite hinzugefügt.
+
 ## v1.0.8 — 2026-04-15
 
 ### Fix: Ingress entfernt — UI war nach Install von 1.0.7 gebrochen
