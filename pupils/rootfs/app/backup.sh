@@ -26,13 +26,13 @@ node -e "
 if [[ -z "${FILEN_EMAIL:-}" ]] || [[ -z "${FILEN_PASSWORD:-}" ]]; then
   echo "Upload: übersprungen (keine Filen-Zugangsdaten gesetzt)"
 else
-  FILEN_OUT=$(filen \
+  FILEN_OUT=0
+  filen \
     --email "${FILEN_EMAIL}" \
     --password "${FILEN_PASSWORD}" \
-    sync "/data/backups:localToCloud:${FILEN_REMOTE_DIR}" 2>&1)
-  echo "${FILEN_OUT}"
-  if echo "${FILEN_OUT}" | grep -qi "no such cloud"; then
-    echo "FEHLER: filen-Ordner '${FILEN_REMOTE_DIR}' existiert nicht!"
+    sync "/data/backups:localToCloud:${FILEN_REMOTE_DIR}" 2>&1 || FILEN_OUT=$?
+  if [[ "${FILEN_OUT}" -ne 0 ]]; then
+    echo "FEHLER: filen Upload fehlgeschlagen (exit ${FILEN_OUT})"
     exit 1
   fi
   echo "Upload: OK → ${FILEN_REMOTE_DIR}"

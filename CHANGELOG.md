@@ -1,10 +1,16 @@
 # Changelog
 
+## v1.0.10 — 2026-04-16
+
+### Fix: Node 18 → 20 — Filen CLI lief nicht auf Pi
+- **Problem:** CouchDB-Base-Image (Debian Bookworm) liefert `nodejs` v18 per apt. `@filen/cli` benötigt Node ≥20 — das CLI crashte sofort, der Fehler war unsichtbar weil `set -e` abbrach bevor der Output geloggt wurde.
+- **Entscheidung:** Node 20 (LTS) via NodeSource in Dockerfile installiert statt apt-Paket. Filen-Fehlerausgabe wird jetzt auch bei Exit-Code ≠ 0 geloggt.
+
 ## v1.0.9 — 2026-04-16
 
 ### Fix: Backup schlägt fehl wenn Filen-Zugangsdaten nicht gesetzt
-- **Problem:** `backup.sh` lief mit `set -e` und brach bei leerem `FILEN_EMAIL`/`FILEN_PASSWORD` sofort ab — auch der lokale CouchDB-Dump war damit verloren.
-- **Entscheidung:** Filen-Upload wird übersprungen wenn keine Zugangsdaten gesetzt. Der lokale Dump in `/data/backups/` wird immer erstellt.
+- **Problem:** `backup.sh` lief mit `set -e` und brach bei leerem `FILEN_EMAIL`/`FILEN_PASSWORD` sofort ab.
+- **Entscheidung:** Filen-Upload wird übersprungen wenn keine Zugangsdaten gesetzt. Lokaler Dump in `/data/backups/` wird immer erstellt.
 
 ### Fix: Zeilenumbrüche in Unterrichtsnotizen
 - **Problem:** Tailwind setzt `white-space: normal` per Default — Zeilenumbrüche aus dem Textarea wurden in der Anzeige ignoriert.
