@@ -14,7 +14,7 @@ RUN npm run build
 FROM couchdb:3.3.3
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      nginx curl ca-certificates jq libsecret-1-0 \
+      nginx curl ca-certificates jq unzip \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -31,8 +31,18 @@ RUN ARCH=$(uname -m) && \
     echo "${SHA}  /usr/local/bin/supercronic" | sha1sum -c - && \
     chmod +x /usr/local/bin/supercronic
 
-# filen CLI (0.0.36: neue SDK v0.3.x, keytar statt node-keyring — Bookworm-kompatibel)
-RUN npm install -g @filen/cli@0.0.36
+# rclone (≥1.73 für offizielles Filen-Backend — kein Keyring, kein D-Bus)
+RUN ARCH=$(uname -m) && \
+    case "${ARCH}" in \
+      x86_64)  RCLONE_ARCH=amd64 ;; \
+      aarch64) RCLONE_ARCH=arm64 ;; \
+      *) echo "Unsupported arch: ${ARCH}" && exit 1 ;; \
+    esac && \
+    curl -fsSLo /tmp/rclone.zip \
+      "https://downloads.rclone.org/rclone-current-linux-${RCLONE_ARCH}.zip" && \
+    unzip -j /tmp/rclone.zip '*/rclone' -d /usr/local/bin/ && \
+    chmod +x /usr/local/bin/rclone && \
+    rm /tmp/rclone.zip
 
 # Statische App-Dateien aus Stage 1
 COPY --from=app-builder /build/build /var/www/pupils/

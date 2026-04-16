@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.16 — 2026-04-16
+
+### Fix: Filen-Upload komplett neu — rclone statt Node-CLI
+- **Problem:** Filen hat Auth v1 deprecated. Alle `@filen/cli`-Versionen (v0.0.30 und v0.0.36) nutzen noch Auth v1 (altes SDK) → `Invalid credentials!` trotz korrekter Zugangsdaten. Das gesamte Node-CLI ist von Filen offiziell abgekündigt.
+- **Root Cause:** Filen API nutzt heute Auth v2 (PBKDF2 + SHA-512 Key-Derivation). Das alte Node-SDK schickt das Klartext-Passwort → API lehnt ab.
+- **Entscheidung:** `@filen/cli` vollständig ersetzt durch `rclone` ≥ 1.73, das das offizielle Filen-Backend (`filen-sdk-go`, Auth v2) enthält. Kein Keyring, kein D-Bus, kein glibc-Problem.
+- **Neues Feld:** `filen_api_key` in den Add-on-Optionen — einmalig mit neuem Filen-Rust-CLI (`filen export-api-key`) auf einem Laptop holen.
+- **backup.sh:** Generiert `rclone.conf` mit obfuskierten Credentials zur Laufzeit in tmpfs, löscht sie nach dem Upload.
+
 ## v1.0.15 — 2026-04-16
 
 ### Fix: Filen CLI auf v0.0.36 gepinnt + libsecret
