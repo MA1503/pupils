@@ -12,3 +12,8 @@ stack/.env
 # Screenshots / Snippets aus Sessions (nicht ins Repo)
 /image*.png
 /image*.jpg
+
+# Claude-Settings und lokale Arbeitsfiles
+/.claude/settings.json
+/archive/
+/task.md
