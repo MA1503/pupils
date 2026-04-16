@@ -315,7 +315,7 @@
                 tabindex="0"
                 onkeydown={(e) => e.key === 'Enter' && startEditEntry(entry)}
               >
-                <p class="text-on-surface leading-relaxed">
+                <p class="text-on-surface leading-relaxed whitespace-pre-wrap">
                   {entry.text || '(leer — tippen zum Bearbeiten)'}
                 </p>
               </div>
@@ -327,7 +327,7 @@
                 tabindex="0"
                 onkeydown={(e) => e.key === 'Enter' && startEditEntry(entry)}
               >
-                <p class="text-on-surface-variant leading-relaxed">
+                <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
                   {entry.text || '(leer — tippen zum Bearbeiten)'}
                 </p>
               </div>

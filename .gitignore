@@ -8,3 +8,7 @@ dist/
 *.sqlite-shm
 stack/.env
 *.log
+
+# Screenshots / Snippets aus Sessions (nicht ins Repo)
+/image*.png
+/image*.jpg
