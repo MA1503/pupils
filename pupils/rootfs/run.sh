@@ -14,6 +14,7 @@ OPTIONS=/data/options.json
 # Credentials come as env vars (set via config.yaml environment block by HAOS supervisor)
 # TEACHER_PASSWORD is only in options.json, not needed as env var for backup
 TEACHER_PASSWORD=$(jq -r '.teacher_password // empty' "${OPTIONS}")
+export STUDIO_NAME=$(jq -r '.studio_name // empty' "${OPTIONS}")
 
 if [[ -z "${TEACHER_PASSWORD}" ]] || [[ -z "${COUCHDB_PASSWORD:-}" ]]; then
   echo "[init] FEHLER: teacher_password und couchdb_password müssen gesetzt sein!"

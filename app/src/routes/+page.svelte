@@ -8,6 +8,10 @@
   let showArchived = $state(false);
 
   onMount(async () => {
+    const saved = localStorage.getItem('sortKey');
+    if (saved === 'name' || saved === 'contractStart' || saved === 'week') {
+      sortKey.set(saved);
+    }
     students.set(await listStudents(showArchived));
     loading = false;
   });
@@ -23,7 +27,7 @@
     window.location.href = '/s/new';
   }
 
-  function toggleSort(key: 'name' | 'contractStart') {
+  function toggleSort(key: 'name' | 'contractStart' | 'week') {
     sortKey.set(key);
     localStorage.setItem('sortKey', key);
   }
@@ -57,6 +61,12 @@
       class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Vertragsbeginn
+    </button>
+    <button
+      onclick={() => toggleSort('week')}
+      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'week' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+    >
+      Wochenplan
     </button>
     <button
       onclick={toggleArchived}

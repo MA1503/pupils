@@ -41,7 +41,7 @@
       <p class="text-xs text-outline mt-2">Tipp: Termin im Format "Mo 17:00" eintragen.</p>
     </div>
   {:else}
-    <div class="space-y-4">
+    <div class="space-y-5">
       {#each todayStudents as student (student._id)}
         <a
           href="/s/{student._id}"

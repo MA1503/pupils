@@ -420,7 +420,7 @@ input, textarea {
 }
 
 /* === Button Elevation === */
-.shadow-primary { box-shadow: 0 4px 16px rgba(255, 139, 161, 0.35); }
+.shadow-primary { box-shadow: 0 4px 12px rgba(255, 139, 161, 0.22); }
 .shadow-primary-lg { box-shadow: 0 8px 24px rgba(255, 139, 161, 0.4); }
 .text-primary-dim { color: var(--primary-dim); }
 .primary-dim { color: var(--primary-dim); }

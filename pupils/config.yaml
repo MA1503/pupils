@@ -1,5 +1,5 @@
 name: "Yasmins Vocal Lab"
-version: "1.0.23"
+version: "1.1.0"
 slug: "pupils"
 description: "Schüler-Verwaltung für Gesangslehrerin"
 url: "https://github.com/ma1503/pupils"
@@ -30,8 +30,10 @@ options:
   couchdb_password: "changeme"
   filen_email: ""
   filen_password: ""
+  studio_name: "Yasmins Vocal Lab"
 schema:
   teacher_password: "password"
   couchdb_password: "password"
   filen_email: "str"
   filen_password: "password"
+  studio_name: "str"

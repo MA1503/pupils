@@ -19,6 +19,8 @@
   let editingEntryId = $state<string | null>(null);
   let editingText = $state('');
   let editingRemark = $state('');
+  let editingDateId = $state<string | null>(null);
+  let editingDateValue = $state('');
 
   let editName = $state('');
   let editLessonSlot = $state('');
@@ -147,6 +149,17 @@
     editingEntryId = null;
     editingText = '';
     editingRemark = '';
+  }
+
+  async function saveDateEdit() {
+    if (!editingDateId || !editingDateValue) return;
+    const entry = entries.find(e => e._id === editingDateId);
+    if (entry) {
+      const updated = await updateEntry(entry, entry.text, entry.remark, editingDateValue);
+      entries = entries.map(e => e._id === updated._id ? updated : e);
+    }
+    editingDateId = null;
+    editingDateValue = '';
   }
 
   function startEditStudent() {
@@ -282,7 +295,7 @@
               class="ml-1 opacity-70 hover:opacity-100 active:scale-90 transition-all"
               aria-label="Song bearbeiten"
             >
-              <img src="/pencil.png" alt="bearbeiten" style="width:16px;height:16px;object-fit:contain;filter:invert(1) opacity(0.7)" />
+              <span class="material-symbols-outlined text-outline" style="font-size:14px">edit</span>
             </button>
           </div>
         {:else}
@@ -346,7 +359,26 @@
                 <div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {/if}
             </div>
-            <span class="block text-sm font-headline font-bold text-on-surface-variant mb-4">{formatDate(entry.entryDate)}</span>
+            {#if editingDateId === entry._id}
+              <div class="flex items-center gap-2 mb-4">
+                <input type="date" bind:value={editingDateValue}
+                  class="bg-surface-container-low border-none rounded-lg px-3 py-1 text-on-surface text-sm font-headline font-bold" />
+                <button onclick={saveDateEdit} aria-label="Datum speichern">
+                  <span class="material-symbols-outlined text-primary" style="font-size:18px">check</span>
+                </button>
+                <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen">
+                  <span class="material-symbols-outlined text-outline" style="font-size:18px">close</span>
+                </button>
+              </div>
+            {:else}
+              <div class="flex items-center gap-1 mb-4">
+                <span class="text-sm font-headline font-bold text-on-surface-variant">{formatDate(entry.entryDate)}</span>
+                <button onclick={() => { editingDateId = entry._id; editingDateValue = entry.entryDate; }}
+                  class="opacity-50 hover:opacity-100 transition-opacity" aria-label="Datum bearbeiten">
+                  <span class="material-symbols-outlined text-outline" style="font-size:13px">edit</span>
+                </button>
+              </div>
+            {/if}
 
             {#if editingEntryId === entry._id}
               <!-- Editing Mode -->
@@ -367,17 +399,11 @@
                   ></textarea>
                 </label>
                 <div class="flex gap-3 mt-4">
-                  <button
-                    onclick={saveEditEntry}
-                    class="flex-1 bg-primary text-on-primary font-headline font-bold py-3 rounded-xl active:scale-95 transition-transform"
-                  >
-                    Speichern
+                  <button onclick={saveEditEntry} class="flex-1 bg-primary text-on-primary py-3 rounded-xl active:scale-95 transition-transform" aria-label="Speichern">
+                    <span class="material-symbols-outlined text-[20px]">check</span>
                   </button>
-                  <button
-                    onclick={cancelEditEntry}
-                    class="flex-1 bg-surface-container-low text-on-surface font-headline font-bold py-3 rounded-xl active:scale-95 transition-transform"
-                  >
-                    Abbrechen
+                  <button onclick={cancelEditEntry} class="flex-1 bg-surface-container-low text-on-surface py-3 rounded-xl active:scale-95 transition-transform" aria-label="Abbrechen">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
                   </button>
                   <button
                     onclick={() => { removeEntry(entry); cancelEditEntry(); }}

@@ -28,8 +28,8 @@
   }
 </script>
 
-<div class="px-6 pt-8 pb-28">
-  <h2 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface mb-8">Einstellungen</h2>
+<div class="pt-8 pb-28">
+  <h2 class="text-5xl font-headline font-extrabold tracking-tight text-on-surface mb-8">Einstellungen</h2>
 
   <div class="space-y-4 mb-8">
     <div class="bg-surface-container-highest p-4 rounded-xl">

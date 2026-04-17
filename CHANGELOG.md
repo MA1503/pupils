@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.1.0 — 2026-04-17
+
+### Fix: Song-Edit-Icon
+- pencil.png entfernt; Material Symbol `edit` (grau, kein Hintergrund) wie der Schüler-Name-Edit-Button
+
+### Fix: Entry-Edit-Buttons als Icons
+- "Speichern"/"Abbrechen" → ✓/✗ Icons, konsistent mit Song-Edit-Form
+
+### Fix: Layout-Einzug Bibliothek + Einstellungen
+- Doppeltes px-6 entfernt; beide Seiten nun bündig mit Heute-Seite
+
+### Fix: Heading-Größe
+- Bibliothek + Einstellungen auf text-5xl (wie Heute) vereinheitlicht
+
+### Fix: Karten-Abstände + Glow
+- space-y-5 statt space-y-4; shadow-primary Opacity leicht reduziert
+
+### Feature: Datum eines Eintrags editierbar
+- Kleines edit-Icon neben dem Datum; öffnet date-Input; speichert via updateEntry
+
+### Feature: Bibliothek Suche
+- Suchfeld filtert nach Song-Titel oder Schülername (client-seitig)
+
+### Feature: Wochenplan-Sortierung
+- Neuer Sort-Button auf Schülerseite; sortiert nach Wochentag + Uhrzeit (Mo→Fr)
+
+### Feature: Konfigurierbarer Studio-Name
+- HAOS-Option `studio_name`; leer = kein Text im Top-Bar; Standard: "Yasmins Vocal Lab"
+
 ## v1.0.23 — 2026-04-16
 
 ### Fix: Stift-Icon Größe + Bibliothek Card-Styling
