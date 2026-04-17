@@ -292,10 +292,10 @@
             <span class="font-headline font-bold text-sm">{song.title}</span>
             <button
               onclick={startEditSong}
-              class="ml-1 opacity-70 hover:opacity-100 active:scale-90 transition-all"
+              class="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-on-primary-container active:scale-90 transition-all border-none"
               aria-label="Song bearbeiten"
             >
-              <span class="material-symbols-outlined text-outline" style="font-size:14px">edit</span>
+              <span class="material-symbols-outlined" style="font-size:14px">edit</span>
             </button>
           </div>
         {:else}
@@ -322,13 +322,13 @@
           class="flex-1 bg-surface-container-low rounded-lg px-3 py-2 text-on-surface text-sm"
           onkeydown={(e) => e.key === 'Enter' && renameSong()}
         />
-        <button onclick={renameSong} class="px-4 py-2 bg-primary text-on-primary rounded-xl active:scale-95 transition-transform" aria-label="Speichern">
+        <button onclick={renameSong} class="w-9 h-9 flex items-center justify-center bg-primary text-on-primary rounded-xl active:scale-95 transition-transform border-none shrink-0" aria-label="Speichern">
           <span class="material-symbols-outlined text-[20px]">check</span>
         </button>
-        <button onclick={removeSong} class="p-2 bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform" aria-label="Song löschen">
+        <button onclick={removeSong} class="w-9 h-9 flex items-center justify-center bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform border-none shrink-0" aria-label="Song löschen">
           <span class="material-symbols-outlined text-[20px]">delete</span>
         </button>
-        <button onclick={() => editingSong = false} class="p-2 bg-surface-container-low text-on-surface-variant rounded-xl active:scale-95 transition-transform" aria-label="Abbrechen">
+        <button onclick={() => editingSong = false} class="w-9 h-9 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-xl active:scale-95 transition-transform border-none shrink-0" aria-label="Abbrechen">
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
       </div>
@@ -362,11 +362,11 @@
             {#if editingDateId === entry._id}
               <div class="flex items-center gap-2 mb-4">
                 <input type="date" bind:value={editingDateValue}
-                  class="bg-surface-container-low border-none rounded-lg px-3 py-1 text-on-surface text-sm font-headline font-bold" />
-                <button onclick={saveDateEdit} aria-label="Datum speichern" class="p-1 bg-primary text-on-primary rounded-lg active:scale-95 transition-transform">
+                  class="bg-surface-container-low border-none rounded-lg px-3 flex-1 text-on-surface text-sm font-headline font-bold h-9" />
+                <button onclick={saveDateEdit} aria-label="Datum speichern" class="w-9 h-9 flex items-center justify-center bg-primary text-on-primary rounded-lg active:scale-95 transition-transform border-none shrink-0">
                   <span class="material-symbols-outlined" style="font-size:18px">check</span>
                 </button>
-                <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen" class="p-1 bg-surface-container-low text-on-surface-variant rounded-lg active:scale-95 transition-transform">
+                <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen" class="w-9 h-9 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-lg active:scale-95 transition-transform border-none shrink-0">
                   <span class="material-symbols-outlined" style="font-size:18px">close</span>
                 </button>
               </div>
@@ -374,8 +374,8 @@
               <div class="flex items-center gap-1 mb-4">
                 <span class="text-sm font-headline font-bold text-on-surface-variant">{formatDate(entry.entryDate)}</span>
                 <button onclick={() => { editingDateId = entry._id; editingDateValue = entry.entryDate; }}
-                  class="opacity-50 hover:opacity-100 transition-opacity" aria-label="Datum bearbeiten">
-                  <span class="material-symbols-outlined text-outline" style="font-size:13px">edit</span>
+                  class="w-7 h-7 ml-1 flex items-center justify-center rounded-lg bg-surface-container-highest text-outline-variant hover:bg-surface-variant hover:text-primary transition-colors border-none" aria-label="Datum bearbeiten">
+                  <span class="material-symbols-outlined" style="font-size:15px">edit</span>
                 </button>
               </div>
             {/if}
@@ -407,7 +407,8 @@
                   </button>
                   <button
                     onclick={() => { removeEntry(entry); cancelEditEntry(); }}
-                    class="bg-error-container text-on-error-container font-headline font-bold py-3 px-4 rounded-xl active:scale-95 transition-transform"
+                    class="w-12 h-12 flex items-center justify-center bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform border-none shrink-0"
+                    aria-label="Löschen"
                   >
                     <span class="material-symbols-outlined">delete</span>
                   </button>

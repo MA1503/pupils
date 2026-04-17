@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.1.2 — 2026-04-17
+
+### Fix: Button-Reset (app.css)
+- Alle Buttons sind jetzt standardmäßig transparent ohne Rahmen/Padding. Verhindert Browser-Default-Styling bei Icon-Buttons ohne Hintergrundklasse.
+
+### Fix: Song-Icon im aktiven Pill
+- Edit-Icon sitzt jetzt in einem runden Container (`bg-black/10`), konsistent mit anderen Edit-Buttons.
+
+### Fix: Song-Edit-Buttons einheitlich
+- Alle drei Buttons (Speichern, Löschen, Abbrechen) jetzt `w-9 h-9` quadratisch mit zentriertem Icon.
+
+### Fix: Datum-Edit-Buttons einheitlich
+- Save/Cancel-Buttons beim Datum-Bearbeiten jetzt `w-9 h-9`, Datum-Input nimmt den restlichen Platz.
+
+### Fix: Datum-Edit-Trigger sauber
+- Das Edit-Icon neben dem Datum sitzt jetzt in einem klickbaren Container (`w-7 h-7`) mit Hover-State.
+
+### Fix: Entry-Delete-Button konsistent
+- Löschen-Button beim Entry-Edit jetzt `w-12 h-12` quadratisch.
+
 ## v1.1.1 — 2026-04-17
 
 ### Fix: Datum-Edit-Buttons gestylt
