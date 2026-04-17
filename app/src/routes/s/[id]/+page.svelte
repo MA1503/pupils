@@ -363,11 +363,11 @@
               <div class="flex items-center gap-2 mb-4">
                 <input type="date" bind:value={editingDateValue}
                   class="bg-surface-container-low border-none rounded-lg px-3 py-1 text-on-surface text-sm font-headline font-bold" />
-                <button onclick={saveDateEdit} aria-label="Datum speichern">
-                  <span class="material-symbols-outlined text-primary" style="font-size:18px">check</span>
+                <button onclick={saveDateEdit} aria-label="Datum speichern" class="p-1 bg-primary text-on-primary rounded-lg active:scale-95 transition-transform">
+                  <span class="material-symbols-outlined" style="font-size:18px">check</span>
                 </button>
-                <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen">
-                  <span class="material-symbols-outlined text-outline" style="font-size:18px">close</span>
+                <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen" class="p-1 bg-surface-container-low text-on-surface-variant rounded-lg active:scale-95 transition-transform">
+                  <span class="material-symbols-outlined" style="font-size:18px">close</span>
                 </button>
               </div>
             {:else}
