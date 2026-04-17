@@ -30,7 +30,7 @@ options:
   couchdb_password: "changeme"
   filen_email: ""
   filen_password: ""
-  studio_name: "Yasmins Vocal Lab"
+  studio_name: ""
 schema:
   teacher_password: "password"
   couchdb_password: "password"
