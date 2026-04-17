@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.1 — 2026-04-17
+
+### Fix: Datum-Edit-Buttons gestylt
+- Save/Cancel-Buttons beim Datum-Bearbeiten hatten keine CSS-Klassen → native Browser-Elemente. Jetzt als Icon-Buttons (`bg-primary` / `bg-surface-container-low`) gestylt.
+
+### Fix: studio_name Default leer
+- Default-Wert "Yasmins Vocal Lab" aus config.yaml entfernt, damit das Feld bei Neuinstallationen leer ist.
+
 ## v1.1.0 — 2026-04-17
 
 ### Fix: Song-Edit-Icon
