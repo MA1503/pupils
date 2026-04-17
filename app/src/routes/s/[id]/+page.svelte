@@ -22,6 +22,15 @@
   let editingDateId = $state<string | null>(null);
   let editingDateValue = $state('');
 
+  let songsExpanded = $state(false);
+  const SONGS_COLLAPSED_LIMIT = 6;
+  const shouldAutoExpand = $derived(activeSongIndex >= SONGS_COLLAPSED_LIMIT);
+  const visibleSongs = $derived(
+    songsExpanded || shouldAutoExpand || songs.length <= SONGS_COLLAPSED_LIMIT
+      ? songs
+      : songs.slice(0, SONGS_COLLAPSED_LIMIT)
+  );
+
   let editName = $state('');
   let editLessonSlot = $state('');
   let editContractStart = $state('');
@@ -282,62 +291,66 @@
     {/if}
   </section>
 
-  <!-- Song Tabs -->
-  <section class="mb-12 relative">
-    <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4 ml-1">Repertoire</h3>
-    <div class="relative w-full">
-      <!-- Tabs Container -->
-      <div
-        class="flex items-center gap-3 overflow-x-auto overflow-y-hidden no-scrollbar pb-2 w-full"
-        style="touch-action: pan-x; overscroll-behavior-x: contain;"
-        onwheel={(e) => {
-          if (e.deltaY !== 0) {
-            e.preventDefault();
-            e.currentTarget.scrollLeft += e.deltaY;
-          }
-        }}
-      >
-        {#each songs as song, i}
+  <!-- Song Repertoire -->
+  <section class="mb-12">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold ml-1">Repertoire</h3>
+      <div class="flex items-center gap-2">
+        <button
+          onclick={addSong}
+          class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-low text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0 border border-outline-variant/20"
+          aria-label="Song hinzufügen"
+        >
+          <span class="material-symbols-outlined text-[20px]">add</span>
+        </button>
+        {#if songs.length > 0}
+          <button
+            onclick={startEditSong}
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-highest text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0 border-none"
+            aria-label="Song bearbeiten"
+          >
+            <span class="material-symbols-outlined text-[20px]">edit</span>
+          </button>
+        {/if}
+      </div>
+    </div>
+
+    {#if songs.length > 0}
+      <div class="flex flex-wrap gap-3">
+        {#each visibleSongs as song}
+          {@const i = songs.indexOf(song)}
           {#if i === activeSongIndex}
-            <div class="flex-shrink-0 flex items-center gap-1 px-5 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20">
-              <span class="font-headline font-bold text-sm">{song.title}</span>
+            <div
+              class="grow px-5 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20 font-headline font-bold text-sm text-center"
+              style="min-width: 140px;"
+            >
+              {song.title}
             </div>
           {:else}
             <button
               onclick={() => switchSong(i)}
-              class="flex-shrink-0 px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant border-none"
+              class="grow px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant border-none"
+              style="min-width: 140px;"
             >
               {song.title}
             </button>
           {/if}
         {/each}
-        <!-- Spacer: reserves scroll-room for fixed action buttons on the right -->
-        <div class="flex-shrink-0 w-[120px]" aria-hidden="true"></div>
       </div>
 
-      <!-- Fixed Buttons Container on the right -->
-      <div 
-        class="absolute right-0 top-0 bottom-2 flex items-center justify-end pr-0 pl-12 pointer-events-none"
-        style="background: linear-gradient(to right, transparent, var(--background) 40%);"
-      >
-        <div class="flex items-center gap-2 bg-background pl-2 pointer-events-auto">
-          <button
-            onclick={addSong}
-            class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant/20 text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0"
-          >
-            <span class="material-symbols-outlined text-[20px]">add</span>
-          </button>
-          {#if songs.length > 0}
-            <button
-              onclick={startEditSong}
-              class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-highest text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0 border-none"
-            >
-              <span class="material-symbols-outlined text-[20px]">edit</span>
-            </button>
-          {/if}
-        </div>
-      </div>
-    </div>
+      {#if songs.length > SONGS_COLLAPSED_LIMIT && !shouldAutoExpand}
+        <button
+          onclick={() => songsExpanded = !songsExpanded}
+          class="mt-4 w-full py-2 text-sm text-outline-variant hover:text-primary transition-colors flex items-center justify-center gap-2 border-none"
+          style="background: transparent;"
+        >
+          <span class="material-symbols-outlined text-[20px]">
+            {songsExpanded ? 'expand_less' : 'expand_more'}
+          </span>
+          {songsExpanded ? 'Weniger' : `${songs.length - SONGS_COLLAPSED_LIMIT} weitere`}
+        </button>
+      {/if}
+    {/if}
 
     {#if editingSong}
       <div class="mt-3 flex items-center gap-2 bg-surface-container-highest p-3 rounded-xl">

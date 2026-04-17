@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.6 — 2026-04-17
+
+### Fix: Repertoire nicht mehr scrollbar, jetzt Wrap-Grid
+- **Root Cause**: `w-[120px]` war keine definierte CSS-Utility (handgeschriebenes CSS, kein Tailwind). Spacer-Div hatte `width: 0` → `scrollWidth === clientWidth` → kein Overflow → Browser konnte nicht scrollen.
+- **Lösung**: Horizontaler Scroll entfernt. Songs werden jetzt als Wrap-Grid angezeigt (2–3 pro Zeile, `flex-grow: 1` + `min-width: 140px`).
+- Bei mehr als 6 Songs: Collapse-Button "▼ X weitere". Aktiver Song wird automatisch sichtbar gehalten (Auto-Expand).
+- Plus/Edit-Buttons aus absolute-positioned Overlay in den Section-Header verschoben.
+- `.flex-wrap { flex-wrap: wrap; }` Utility zu `app/src/app.css` hinzugefügt.
+
 ## v1.1.5 — 2026-04-17
 
 ### Fix: Repertoire-Scroll wirklich repariert
