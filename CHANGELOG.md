@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.7 — 2026-04-17
+
+### Fix: Studio-Name bleibt nach Neustart leer
+- **Root Cause**: `studio_name` war als Option in `config.yaml` definiert, aber fehlte in der `environment`-Sektion — der Node-Prozess erhielt `STUDIO_NAME` nie.
+- **Fix**: `STUDIO_NAME: "{{studio_name}}"` in `environment` ergänzt.
+
 ## v1.1.6 — 2026-04-17
 
 ### Fix: Repertoire nicht mehr scrollbar, jetzt Wrap-Grid

@@ -1,5 +1,5 @@
 name: "Yasmins Vocal Lab"
-version: "1.1.6"
+version: "1.1.7"
 slug: "pupils"
 description: "Schüler-Verwaltung für Gesangslehrerin"
 url: "https://github.com/ma1503/pupils"
@@ -25,6 +25,7 @@ environment:
   COUCHDB_URL: "http://127.0.0.1:5984"
   FILEN_REMOTE_DIR: "/pupils-backups"
   BACKUP_RETENTION_DAYS: "30"
+  STUDIO_NAME: "{{studio_name}}"
 options:
   teacher_password: "changeme"
   couchdb_password: "changeme"
