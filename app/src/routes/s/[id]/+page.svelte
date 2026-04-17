@@ -287,8 +287,9 @@
     <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4 ml-1">Repertoire</h3>
     <div class="relative w-full">
       <!-- Tabs Container -->
-      <div 
-        class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 pr-[120px] w-full"
+      <div
+        class="flex items-center gap-3 overflow-x-auto overflow-y-hidden no-scrollbar pb-2 w-full"
+        style="touch-action: pan-x; overscroll-behavior-x: contain;"
         onwheel={(e) => {
           if (e.deltaY !== 0) {
             e.preventDefault();
@@ -310,6 +311,8 @@
             </button>
           {/if}
         {/each}
+        <!-- Spacer: reserves scroll-room for fixed action buttons on the right -->
+        <div class="flex-shrink-0 w-[120px]" aria-hidden="true"></div>
       </div>
 
       <!-- Fixed Buttons Container on the right -->

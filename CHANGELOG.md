@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.5 — 2026-04-17
+
+### Fix: Repertoire-Scroll wirklich repariert
+- `pr-[120px]` durch einen `flex-shrink-0`-Spacer-Div ersetzt. Grund: Safari/WebKit ignoriert `padding-right` beim Berechnen des Scroll-Extents in Flex-Containern — Scrollbereich endete am letzten Chip, nicht am Padding.
+- `touch-action: pan-x` explizit gesetzt, damit der Browser horizontale Swipes eindeutig dem Tab-Scroll zuordnet und nicht z.B. als Back-Gesture interpretiert.
+- `overscroll-behavior-x: contain` verhindert Scroll-Chaining auf den Parent.
+
 ## v1.1.4 — 2026-04-17
 
 ### Fix: Repertoire-Scrolling repariert
