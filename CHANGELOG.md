@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.3 — 2026-04-17
+
+### Fix: Repertoire-Bereich umstrukturiert
+- Song-Chips scrollen links, Edit/Add-Buttons sind rechts fixiert mit Gradient-Overlay
+- Edit-Icon aus aktivem Chip entfernt; zentrale Edit-Schaltfläche rechts
+
+### Fix: Song-Edit-Buttons (Dunkel-Stil)
+- Alle 3 Buttons (Save/Delete/Cancel) auf `bg-surface-container-low` mit farbigen Icons: rosa Check, gedämpftes Rot für Löschen, grau für Abbrechen
+
+### Fix: text-error-dim Utility hinzugefügt
+- Fehlende CSS-Klasse für `--error-dim` Token ergänzt
+
 ## v1.1.2 — 2026-04-17
 
 ### Fix: Button-Reset (app.css)

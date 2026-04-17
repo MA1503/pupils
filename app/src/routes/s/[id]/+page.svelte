@@ -283,52 +283,65 @@
   </section>
 
   <!-- Song Tabs -->
-  <section class="mb-12">
+  <section class="mb-12 relative">
     <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4 ml-1">Repertoire</h3>
-    <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
-      {#each songs as song, i}
-        {#if i === activeSongIndex}
-          <div class="flex-shrink-0 flex items-center gap-1 px-4 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20">
-            <span class="font-headline font-bold text-sm">{song.title}</span>
+    <div class="relative flex items-center">
+      <!-- Tabs Container -->
+      <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 pr-[120px] w-full">
+        {#each songs as song, i}
+          {#if i === activeSongIndex}
+            <div class="flex-shrink-0 flex items-center gap-1 px-5 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20">
+              <span class="font-headline font-bold text-sm">{song.title}</span>
+            </div>
+          {:else}
+            <button
+              onclick={() => switchSong(i)}
+              class="flex-shrink-0 px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant border-none"
+            >
+              {song.title}
+            </button>
+          {/if}
+        {/each}
+      </div>
+
+      <!-- Fixed Buttons Container on the right -->
+      <div 
+        class="absolute right-0 top-0 bottom-2 flex items-center justify-end pr-0 pl-12 pointer-events-none"
+        style="background: linear-gradient(to right, transparent, var(--background) 40%);"
+      >
+        <div class="flex items-center gap-2 bg-background pl-2 pointer-events-auto">
+          <button
+            onclick={addSong}
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant/20 text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0"
+          >
+            <span class="material-symbols-outlined text-[20px]">add</span>
+          </button>
+          {#if songs.length > 0}
             <button
               onclick={startEditSong}
-              class="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-on-primary-container active:scale-90 transition-all border-none"
-              aria-label="Song bearbeiten"
+              class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-highest text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0 border-none"
             >
-              <span class="material-symbols-outlined" style="font-size:14px">edit</span>
+              <span class="material-symbols-outlined text-[20px]">edit</span>
             </button>
-          </div>
-        {:else}
-          <button
-            onclick={() => switchSong(i)}
-            class="flex-shrink-0 px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant"
-          >
-            {song.title}
-          </button>
-        {/if}
-      {/each}
-      <button
-        onclick={addSong}
-        class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-surface-container-low border border-outline-variant/20 text-primary rounded-full hover:bg-surface-container-highest transition-colors"
-      >
-        <span class="material-symbols-outlined">add</span>
-      </button>
+          {/if}
+        </div>
+      </div>
     </div>
 
     {#if editingSong}
       <div class="mt-3 flex items-center gap-2 bg-surface-container-highest p-3 rounded-xl">
         <input
           bind:value={editSongTitle}
-          class="flex-1 bg-surface-container-low rounded-lg px-3 py-2 text-on-surface text-sm"
+          class="flex-1 bg-surface-container-low rounded-lg px-4 py-2.5 text-on-surface text-sm border-none font-headline font-bold"
           onkeydown={(e) => e.key === 'Enter' && renameSong()}
         />
-        <button onclick={renameSong} class="w-9 h-9 flex items-center justify-center bg-primary text-on-primary rounded-xl active:scale-95 transition-transform border-none shrink-0" aria-label="Speichern">
+        <button onclick={renameSong} class="w-10 h-10 flex items-center justify-center bg-surface-container-low text-primary rounded-xl active:scale-95 transition-transform border-none shrink-0 hover:bg-surface-variant" aria-label="Speichern">
           <span class="material-symbols-outlined text-[20px]">check</span>
         </button>
-        <button onclick={removeSong} class="w-9 h-9 flex items-center justify-center bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform border-none shrink-0" aria-label="Song löschen">
+        <button onclick={removeSong} class="w-10 h-10 flex items-center justify-center bg-surface-container-low text-error-dim rounded-xl active:scale-95 transition-transform border-none shrink-0 hover:bg-surface-variant" aria-label="Song löschen">
           <span class="material-symbols-outlined text-[20px]">delete</span>
         </button>
-        <button onclick={() => editingSong = false} class="w-9 h-9 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-xl active:scale-95 transition-transform border-none shrink-0" aria-label="Abbrechen">
+        <button onclick={() => editingSong = false} class="w-10 h-10 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-xl active:scale-95 transition-transform border-none shrink-0 hover:bg-surface-variant" aria-label="Abbrechen">
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
       </div>

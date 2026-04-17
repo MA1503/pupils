@@ -110,6 +110,7 @@ input, textarea {
 .text-secondary { color: var(--secondary); }
 .text-tertiary { color: var(--tertiary); }
 .text-error { color: var(--error); }
+.text-error-dim { color: var(--error-dim); }
 
 .bg-primary { background-color: var(--primary); }
 .bg-primary-container { background-color: var(--primary-container); }
