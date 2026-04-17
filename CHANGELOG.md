@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.1.4 — 2026-04-17
+
+### Fix: Repertoire-Scrolling repariert
+- Flex-Container-Breiten-Problem behoben; Songs scrollen jetzt reibungslos horizontal
+- Mausrad-Support für Desktop hinzugefügt (vertikales Scrollen → horizontale Tab-Navigation)
+
+### Feature: Neue Songs erscheinen vorne
+- Neuer Song wird an erster Position eingefügt (`activeSongIndex = 0`)
+- `listSongs` gibt Songs in umgekehrter Reihenfolge zurück (neueste zuerst)
+
 ## v1.1.3 — 2026-04-17
 
 ### Fix: Repertoire-Bereich umstrukturiert

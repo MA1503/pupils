@@ -61,7 +61,8 @@ export async function listSongs(sid: string): Promise<Song[]> {
   });
   return result.rows
     .map(r => r.doc!)
-    .filter(d => !d.archived);
+    .filter(d => !d.archived)
+    .reverse();
 }
 
 export async function createSong(sid: string, title: string): Promise<Song> {

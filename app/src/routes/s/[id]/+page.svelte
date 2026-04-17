@@ -72,8 +72,8 @@
     if (!title) return;
     try {
       const song = await createSong(id, title);
-      songs = [...songs, song];
-      activeSongIndex = songs.length - 1;
+      songs = [song, ...songs];
+      activeSongIndex = 0;
       entries = [];
     } catch (e) {
       const err = e as { status?: number };
@@ -285,9 +285,17 @@
   <!-- Song Tabs -->
   <section class="mb-12 relative">
     <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4 ml-1">Repertoire</h3>
-    <div class="relative flex items-center">
+    <div class="relative w-full">
       <!-- Tabs Container -->
-      <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 pr-[120px] w-full">
+      <div 
+        class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 pr-[120px] w-full"
+        onwheel={(e) => {
+          if (e.deltaY !== 0) {
+            e.preventDefault();
+            e.currentTarget.scrollLeft += e.deltaY;
+          }
+        }}
+      >
         {#each songs as song, i}
           {#if i === activeSongIndex}
             <div class="flex-shrink-0 flex items-center gap-1 px-5 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20">
