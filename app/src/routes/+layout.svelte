@@ -6,7 +6,7 @@
   import { syncStatus } from '$lib/stores';
   import '../app.css';
 
-  let { data, children } = $props();
+  let { children } = $props();
   let currentPath = $derived($page.url.pathname);
 
   onMount(() => {
@@ -33,9 +33,6 @@
     <!-- TopAppBar -->
     <header class="fixed top-0 w-full z-50 bg-[#131313]/80 backdrop-blur-md max-w-[640px]">
       <div class="flex items-center justify-between px-6 h-16 w-full">
-        {#if data.studioName}
-        <span class="text-xl font-bold text-[#ff8ba1] font-headline tracking-tight">{data.studioName}</span>
-      {/if}
       </div>
     </header>
 

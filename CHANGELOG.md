@@ -1,10 +1,12 @@
 # Changelog
 
-## v1.1.7 — 2026-04-17
+## v1.1.8 — 2026-04-18
 
-### Fix: Studio-Name bleibt nach Neustart leer
-- **Root Cause**: `studio_name` war als Option in `config.yaml` definiert, aber fehlte in der `environment`-Sektion — der Node-Prozess erhielt `STUDIO_NAME` nie.
-- **Fix**: `STUDIO_NAME: "{{studio_name}}"` in `environment` ergänzt.
+### Fix: Schwarzer Bildschirm beim Anlegen eines neuen Schülers
+- **Root Cause**: `+layout.server.ts` (in v1.1.0 für Studio-Name eingeführt) erzeugte bei `adapter-static` nur für prerendered Routes ein `__data.json`. `/s/[id]` ist `prerender=false` → keine Datei → nginx liefert SPA-Fallback (`index.html`) → `JSON.parse('<!doctype html>…')` → Crash → schwarze Seite.
+- **Fix**: `+layout.server.ts` gelöscht, `data.studioName`-Nutzung aus `+layout.svelte` entfernt. Studio-Name wird vorläufig **nicht** mehr angezeigt (Titel-Leiste ist leer, statt die App zu brechen).
+- **Hinweis zu v1.1.7**: War ein No-Op. `adapter-static` liest `$env/dynamic/private` zur **Build-Zeit** im Docker-Image, nicht zur Runtime im Container — die Env-Variable wurde baked-in als `''` und erreichte den Client nie.
+- **TODO für v1.1.9**: Studio-Name-Anzeige via Runtime-Mechanismus wieder einbauen (z.B. `run.sh` schreibt `studio.json` in den nginx-Docroot, Layout fetched on mount).
 
 ## v1.1.6 — 2026-04-17
 
