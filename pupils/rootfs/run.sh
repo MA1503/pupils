@@ -73,6 +73,10 @@ curl -sf -u "admin:${COUCHDB_PASSWORD}" \
 
 echo "[run] DB und Users konfiguriert."
 
+# Studio-Name als JSON für das Frontend (Runtime-Config, nicht Build-Time)
+echo "{\"studioName\":\"${STUDIO_NAME:-}\"}" > /var/www/pupils/studio.json
+echo "[run] studio.json geschrieben."
+
 # --- Backup-Cron starten (Hintergrund) ---
 supercronic /app/crontab &
 echo "[run] Backup-Cron gestartet."

@@ -1,12 +1,16 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import {
     getStudent, updateStudent,
     listSongs, createSong, updateSong, archiveSong,
-    listEntries, createEntry, updateEntry, deleteEntry
+    listEntries, createEntry, updateEntry, deleteEntry,
+    chargeLesson, addMakeupDate, switchBilling,
+    addGeneralEntry, updateGeneralEntry, deleteGeneralEntry
   } from '$lib/repo';
-  import type { Student, Song, Entry } from '$lib/types';
+  import type { Student, Song, Entry, GeneralEntry, Billing, Schedule } from '$lib/types';
+  import ScheduleInput from '$lib/components/ScheduleInput.svelte';
+  import BillingBadge from '$lib/components/BillingBadge.svelte';
 
   const id = $page.params.id as string;
 
@@ -32,12 +36,32 @@
   );
 
   let editName = $state('');
-  let editLessonSlot = $state('');
+  let editSchedule = $state<Schedule | null>(null);
   let editContractStart = $state('');
   let editTariff = $state('');
+  
+  // Billing edit
+  let editingBilling = $state(false);
+  let editBillingType = $state<Billing['type']>('free');
+  let editCardSize = $state(10);
+  let editContractStartDate = $state('');
+  let editContractRate = $state<number | undefined>(undefined);
 
   let editingSong = $state(false);
   let editSongTitle = $state('');
+  
+  // Makeup date
+  let showMakeupInput = $state(false);
+  let makeupDateValue = $state('');
+  
+  // General notes editing
+  let editingGeneralEntryId = $state<string | null>(null);
+  let editingGeneralText = $state('');
+  let editingGeneralRemark = $state('');
+  let editingGeneralDate = $state<string | null>(null);
+  let editingGeneralDateValue = $state('');
+
+  const WEEKDAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
   onMount(async () => {
     if (id === 'new') {
@@ -60,8 +84,8 @@
         const idx = songs.findIndex(s => s._id.split(':')[2] === wantedSongUlid);
         if (idx >= 0) activeSongIndex = idx;
       }
-      if (songs.length > 0) {
-        entries = await listEntries(songs[activeSongIndex]._id);
+      if (songs.length > 0 && activeSongIndex > 0) {
+        entries = await listEntries(songs[activeSongIndex - 1]._id);
       }
     } catch (e) {
       console.error('Fehler beim Laden:', e);
@@ -70,10 +94,20 @@
     }
   });
 
-  async function switchSong(idx: number) {
+  // Tab array includes "Allgemein" at position 0
+  const allTabs = $derived([
+    { type: 'general', title: 'Allgemein' },
+    ...songs.map(s => ({ type: 'song' as const, title: s.title, song: s }))
+  ]);
+
+  async function switchTab(idx: number) {
     editingSong = false;
     activeSongIndex = idx;
-    entries = await listEntries(songs[idx]._id);
+    if (idx > 0 && songs[idx - 1]) {
+      entries = await listEntries(songs[idx - 1]._id);
+    } else {
+      entries = [];
+    }
   }
 
   async function addSong() {
@@ -82,7 +116,7 @@
     try {
       const song = await createSong(id, title);
       songs = [song, ...songs];
-      activeSongIndex = 0;
+      activeSongIndex = 1; // Position 1 (after Allgemein)
       entries = [];
     } catch (e) {
       const err = e as { status?: number };
@@ -95,35 +129,38 @@
   }
 
   function startEditSong() {
-    editSongTitle = songs[activeSongIndex].title;
+    if (activeSongIndex === 0 || !songs[activeSongIndex - 1]) return;
+    editSongTitle = songs[activeSongIndex - 1].title;
     editingSong = true;
   }
 
   async function renameSong() {
-    if (!editSongTitle.trim()) return;
-    const updated = await updateSong(songs[activeSongIndex], { title: editSongTitle.trim() });
-    songs = songs.map((s, i) => i === activeSongIndex ? updated : s);
+    if (!editSongTitle.trim() || activeSongIndex === 0) return;
+    const updated = await updateSong(songs[activeSongIndex - 1], { title: editSongTitle.trim() });
+    songs = songs.map((s, i) => i === activeSongIndex - 1 ? updated : s);
     editingSong = false;
   }
 
   async function removeSong() {
-    if (!confirm(`Song "${songs[activeSongIndex].title}" löschen?`)) return;
-    await archiveSong(songs[activeSongIndex]);
-    const remaining = songs.filter((_, i) => i !== activeSongIndex);
+    if (activeSongIndex === 0 || !confirm(`Song "${songs[activeSongIndex - 1].title}" löschen?`)) return;
+    await archiveSong(songs[activeSongIndex - 1]);
+    const remaining = songs.filter((_, i) => i !== activeSongIndex - 1);
     songs = remaining;
     editingSong = false;
     if (remaining.length === 0) {
       activeSongIndex = 0;
       entries = [];
     } else {
-      activeSongIndex = Math.min(activeSongIndex, remaining.length - 1);
-      entries = await listEntries(remaining[activeSongIndex]._id);
+      activeSongIndex = Math.min(activeSongIndex, remaining.length);
+      if (activeSongIndex > 0) {
+        entries = await listEntries(remaining[activeSongIndex - 1]._id);
+      }
     }
   }
 
   async function addEntry() {
-    if (songs.length === 0) return;
-    const entry = await createEntry(songs[activeSongIndex]._id, id);
+    if (activeSongIndex === 0 || songs.length === 0) return;
+    const entry = await createEntry(songs[activeSongIndex - 1]._id, id);
     entries = [entry, ...entries];
   }
 
@@ -174,21 +211,69 @@
   function startEditStudent() {
     if (!student) return;
     editName = student.name;
-    editLessonSlot = student.lessonSlot;
+    editSchedule = student.schedule ?? null;
     editContractStart = student.contractStart;
     editTariff = student.tariff;
     editingStudent = true;
+    editingBilling = false;
+    editBillingType = student.billing?.type ?? 'free';
+    if (student.billing?.type === 'card') {
+      editCardSize = (student.billing as Extract<Billing, { type: 'card' }>).size;
+    }
+    if (student.billing?.type === 'contract') {
+      const contract = student.billing as Extract<Billing, { type: 'contract' }>;
+      editContractStartDate = contract.startDate;
+      editContractRate = contract.monthlyRate;
+    }
   }
 
   async function saveStudent() {
     if (!student) return;
+    
+    // Build lessonSlot string from schedule for backward compatibility
+    let lessonSlotStr = student.lessonSlot;
+    if (editSchedule) {
+      const dayName = WEEKDAY_NAMES[editSchedule.weekday];
+      const cadenceStr = editSchedule.cadence === 'biweekly-even' 
+        ? ', zweiwöchentlich gerade' 
+        : editSchedule.cadence === 'biweekly-odd' 
+          ? ', zweiwöchentlich ungerade' 
+          : '';
+      lessonSlotStr = `${dayName} ${editSchedule.time}${cadenceStr}`;
+    }
+    
     student = await updateStudent(student, {
       name: editName,
-      lessonSlot: editLessonSlot,
+      schedule: editSchedule ?? undefined,
+      lessonSlot: lessonSlotStr,
       contractStart: editContractStart,
       tariff: editTariff
     });
     editingStudent = false;
+  }
+  
+  async function saveBilling() {
+    if (!student) return;
+    
+    let newBilling: Billing;
+    switch (editBillingType) {
+      case 'card':
+        newBilling = { type: 'card', size: editCardSize, charges: [] };
+        break;
+      case 'contract':
+        newBilling = { 
+          type: 'contract', 
+          startDate: editContractStartDate || new Date().toISOString().slice(0, 10),
+          monthlyRate: editContractRate,
+          charges: []
+        };
+        break;
+      default:
+        newBilling = { type: 'free' };
+    }
+    
+    student = await switchBilling(student, newBilling);
+    editingBilling = false;
   }
 
   async function toggleArchive() {
@@ -198,6 +283,74 @@
       : `${student.name} pausieren? Der Schüler verschwindet aus der Hauptliste.`;
     if (!confirm(msg)) return;
     student = await updateStudent(student, { archived: !student.archived });
+  }
+  
+  async function handleChargeLesson() {
+    if (!student || !student.billing || student.billing.type === 'free') return;
+    student = await chargeLesson(student);
+  }
+  
+  async function handleAddMakeupDate() {
+    if (!student || !makeupDateValue) return;
+    student = await addMakeupDate(student, makeupDateValue);
+    showMakeupInput = false;
+    makeupDateValue = '';
+  }
+  
+  function formatSchedule(s: Schedule): string {
+    const dayName = WEEKDAY_NAMES[s.weekday];
+    const cadenceLabel = s.cadence === 'biweekly-even' || s.cadence === 'biweekly-odd' ? '2-wöchig' : '';
+    return `${dayName} ${s.time}${cadenceLabel ? ' · ' + cadenceLabel : ''}`;
+  }
+  
+  // General notes functions
+  async function addGeneralNote() {
+    if (!student) return;
+    const newNote = await addGeneralEntry(student, '', '');
+    student = newNote;
+    editingGeneralEntryId = newNote.generalNotes?.[newNote.generalNotes.length - 1]?.id ?? null;
+    editingGeneralText = '';
+    editingGeneralRemark = '';
+  }
+  
+  function startEditGeneralEntry(entry: GeneralEntry) {
+    editingGeneralEntryId = entry.id;
+    editingGeneralText = entry.text;
+    editingGeneralRemark = entry.remark ?? '';
+  }
+  
+  async function saveEditGeneralEntry() {
+    if (!student || !editingGeneralEntryId) return;
+    student = await updateGeneralEntry(student, editingGeneralEntryId, editingGeneralText, editingGeneralRemark);
+    editingGeneralEntryId = null;
+    editingGeneralText = '';
+    editingGeneralRemark = '';
+  }
+  
+  function cancelEditGeneralEntry() {
+    editingGeneralEntryId = null;
+    editingGeneralText = '';
+    editingGeneralRemark = '';
+  }
+  
+  async function removeGeneralEntry(entry: GeneralEntry) {
+    if (!student || !confirm('Eintrag löschen?')) return;
+    student = await deleteGeneralEntry(student, entry.id);
+  }
+  
+  async function saveGeneralDateEdit() {
+    if (!student || !editingGeneralDate || !editingGeneralDateValue) return;
+    const entry = student.generalNotes?.find(e => e.id === editingGeneralDate);
+    if (entry) {
+      const updated = await updateGeneralEntry(student, editingGeneralDate, entry.text, entry.remark);
+      // Update date manually
+      const finalNotes = updated.generalNotes?.map(e => 
+        e.id === editingGeneralDate ? { ...e, entryDate: editingGeneralDateValue, updatedAt: new Date().toISOString() } : e
+      );
+      student = await updateStudent(updated, { generalNotes: finalNotes });
+    }
+    editingGeneralDate = null;
+    editingGeneralDateValue = '';
   }
 
   function formatDate(dateStr: string): string {
@@ -211,9 +364,12 @@
   <!-- Profile Header Area -->
   <section class="mb-10">
     <div class="flex items-center justify-between group">
-      <h2 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
-        {student.name}
-      </h2>
+      <div class="flex items-center gap-3">
+        <h2 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
+          {student.name}
+        </h2>
+        <BillingBadge billing={student.billing} />
+      </div>
       <button
         onclick={startEditStudent}
         class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-highest text-primary hover:bg-surface-variant transition-colors active:scale-95"
@@ -229,11 +385,15 @@
           placeholder="Name"
           class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface"
         />
-        <input
-          bind:value={editLessonSlot}
-          placeholder="Unterrichtstermin (z.B. Mo 17:00)"
-          class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface"
-        />
+        
+        <div>
+          <label class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-2">Unterrichtstermin</label>
+          <ScheduleInput value={editSchedule} onchange={(s) => editSchedule = s} />
+          {#if student.schedule === null && student.lessonSlot}
+            <p class="text-xs text-yellow-500 mt-2">⚠ Bitte Termin überprüfen — konnte nicht automatisch erkannt werden</p>
+          {/if}
+        </div>
+        
         <input
           bind:value={editContractStart}
           type="date"
@@ -244,6 +404,64 @@
           placeholder="Tarif (z.B. 30min · 90€/Monat)"
           class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface"
         />
+        
+        <!-- Billing Section -->
+        <div class="border-t border-outline-variant/30 pt-4 mt-4">
+          <label class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-2">Abrechnung</label>
+          
+          {#if !editingBilling}
+            <div class="flex items-center justify-between bg-surface-container-low p-3 rounded-lg">
+              <span class="text-sm text-on-surface">
+                {student.billing?.type === 'card' ? '10er-Karte' : 
+                 student.billing?.type === 'contract' ? 'Festvertrag' : 'Frei'}
+              </span>
+              <button onclick={() => editingBilling = true} class="text-primary text-sm font-bold">Ändern</button>
+            </div>
+          {:else}
+            <div class="space-y-3 bg-surface-container-low p-4 rounded-lg">
+              <div class="flex flex-wrap gap-2">
+                {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: '10er-Karte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
+                  <button
+                    onclick={() => editBillingType = opt.key as Billing['type']}
+                    class="px-3 py-1.5 rounded-full text-xs font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
+                  >
+                    {opt.label}
+                  </button>
+                {/each}
+              </div>
+              
+              {#if editBillingType === 'card'}
+                <input
+                  type="number"
+                  bind:value={editCardSize}
+                  placeholder="Größe (z.B. 10)"
+                  class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+                />
+              {/if}
+              
+              {#if editBillingType === 'contract'}
+                <input
+                  type="date"
+                  bind:value={editContractStartDate}
+                  placeholder="Vertragsbeginn"
+                  class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm mb-2"
+                />
+                <input
+                  type="number"
+                  bind:value={editContractRate}
+                  placeholder="Monatlicher Betrag (optional)"
+                  class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+                />
+              {/if}
+              
+              <div class="flex gap-2 pt-2">
+                <button onclick={saveBilling} class="flex-1 bg-primary text-on-primary py-2 rounded-lg text-sm font-bold">Speichern</button>
+                <button onclick={() => editingBilling = false} class="flex-1 bg-surface-container-highest text-on-surface py-2 rounded-lg text-sm font-bold">Abbrechen</button>
+              </div>
+            </div>
+          {/if}
+        </div>
+        
         <!-- Archiv-Toggle -->
         <div class="flex items-center justify-between bg-surface-container-low p-4 rounded-xl">
           <div>
@@ -277,7 +495,14 @@
       <div class="mt-4 grid grid-cols-3 gap-3">
         <div class="bg-surface-container-low p-3 rounded-xl">
           <p class="text-[10px] uppercase tracking-widest text-outline mb-1 font-bold">Termin</p>
-          <p class="text-sm font-semibold text-on-surface-variant">{student.lessonSlot || '—'}</p>
+          {#if student.schedule}
+            <p class="text-sm font-semibold text-on-surface-variant">{formatSchedule(student.schedule)}</p>
+          {:else}
+            <p class="text-sm font-semibold text-on-surface-variant">{student.lessonSlot || '—'}</p>
+            {#if student.schedule === null && student.lessonSlot}
+              <p class="text-xs text-yellow-500 mt-1">⚠ Bitte überprüfen</p>
+            {/if}
+          {/if}
         </div>
         <div class="bg-surface-container-low p-3 rounded-xl">
           <p class="text-[10px] uppercase tracking-widest text-outline mb-1 font-bold">Tarif</p>
@@ -288,10 +513,50 @@
           <p class="text-sm font-semibold text-on-surface-variant">{student.contractStart || '—'}</p>
         </div>
       </div>
+      
+      <!-- Billing and Makeup Buttons -->
+      {#if student.billing && student.billing.type !== 'free'}
+        <div class="flex gap-2 mt-3">
+          <button
+            onclick={handleChargeLesson}
+            class="flex-1 bg-surface-container-low text-on-surface font-headline font-bold py-2 rounded-xl active:scale-95 transition-transform text-sm"
+          >
+            Stunde abrechnen
+          </button>
+          <button
+            onclick={() => showMakeupInput = !showMakeupInput}
+            class="flex-1 bg-surface-container-low text-on-surface font-headline font-bold py-2 rounded-xl active:scale-95 transition-transform text-sm"
+          >
+            Verschieben
+          </button>
+        </div>
+        
+        {#if showMakeupInput}
+          <div class="flex gap-2 mt-2">
+            <input
+              type="date"
+              bind:value={makeupDateValue}
+              class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+            />
+            <button
+              onclick={handleAddMakeupDate}
+              class="px-4 bg-primary text-on-primary rounded-lg text-sm font-bold"
+            >
+              OK
+            </button>
+            <button
+              onclick={() => { showMakeupInput = false; makeupDateValue = ''; }}
+              class="px-4 bg-surface-container-highest text-on-surface rounded-lg text-sm"
+            >
+              ✕
+            </button>
+          </div>
+        {/if}
+      {/if}
     {/if}
   </section>
 
-  <!-- Song Repertoire -->
+  <!-- Song Repertoire Tabs -->
   <section class="mb-12">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold ml-1">Repertoire</h3>
@@ -303,7 +568,7 @@
         >
           <span class="material-symbols-outlined text-[20px]">add</span>
         </button>
-        {#if songs.length > 0}
+        {#if songs.length > 0 && activeSongIndex > 0}
           <button
             onclick={startEditSong}
             class="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container-highest text-primary hover:bg-surface-variant transition-colors active:scale-95 shrink-0 border-none"
@@ -315,24 +580,25 @@
       </div>
     </div>
 
-    {#if songs.length > 0}
+    {#if allTabs.length > 0}
       <div class="flex flex-wrap gap-3">
-        {#each visibleSongs as song}
-          {@const i = songs.indexOf(song)}
-          {#if i === activeSongIndex}
+        {#each allTabs as tab, i}
+          {@const isGeneral = tab.type === 'general'}
+          {@const isActive = i === activeSongIndex}
+          {#if isActive}
             <div
-              class="grow px-5 py-2.5 rounded-full bg-primary text-on-primary-container shadow-lg shadow-primary/20 font-headline font-bold text-sm text-center"
+              class="grow px-5 py-2.5 rounded-full font-headline font-bold text-sm text-center shadow-lg {isGeneral ? 'bg-surface-container-highest text-on-surface-variant' : 'bg-primary text-on-primary-container shadow-primary/20'}"
               style="min-width: 140px;"
             >
-              {song.title}
+              {tab.title}
             </div>
           {:else}
             <button
-              onclick={() => switchSong(i)}
-              class="grow px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant border-none"
+              onclick={() => switchTab(i)}
+              class="grow px-5 py-2.5 rounded-full font-headline font-bold text-sm transition-colors border-none {isGeneral ? 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant' : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant'}"
               style="min-width: 140px;"
             >
-              {song.title}
+              {tab.title}
             </button>
           {/if}
         {/each}
@@ -372,138 +638,258 @@
     {/if}
   </section>
 
-  <!-- Notiz-Liste (Notes Timeline) -->
+  <!-- General Notes / Entry List -->
   <section class="pb-32">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold ml-1">Stundenprotokoll</h3>
+      <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold ml-1">
+        {activeSongIndex === 0 ? 'Allgemeine Notizen' : 'Stundenprotokoll'}
+      </h3>
       <div class="h-[1px] flex-grow ml-4 bg-outline-variant/20"></div>
     </div>
 
-    {#if songs.length === 0}
-      <p class="text-center text-outline-variant py-8">Noch keine Songs. Tipp auf + in der Tab-Leiste.</p>
-    {:else if entries.length === 0}
-      <p class="text-center text-outline-variant py-8">Noch keine Einträge. Tipp auf "+ Heute".</p>
-    {:else}
-      <div class="space-y-10 relative">
-        <!-- Vertical Timeline Line -->
-        <div class="absolute left-3 top-2 bottom-0 w-[1px] bg-gradient-to-b from-primary/40 to-transparent"></div>
+    {#if activeSongIndex === 0}
+      <!-- General Notes Tab -->
+      {#if !student?.generalNotes?.length}
+        <p class="text-center text-outline-variant py-8">Noch keine allgemeinen Einträge. Tipp auf "+ Notiz".</p>
+      {:else}
+        <div class="space-y-10 relative">
+          <!-- Vertical Timeline Line -->
+          <div class="absolute left-3 top-2 bottom-0 w-[1px] bg-gradient-to-b from-surface-variant to-transparent"></div>
 
-        {#each entries as entry, i}
-          <div class="relative pl-10 {i > 0 ? 'opacity-60' : ''}">
-            <!-- Progress Pip -->
-            <div class="absolute left-1 top-1.5 w-4 h-4 rounded-full border-2 {i === 0 ? 'border-primary bg-background' : 'border-outline-variant bg-background'} flex items-center justify-center">
-              {#if i === 0}
-                <div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
-              {/if}
-            </div>
-            {#if editingDateId === entry._id}
-              <div class="flex items-center gap-2 mb-4">
-                <input type="date" bind:value={editingDateValue}
-                  class="bg-surface-container-low border-none rounded-lg px-3 flex-1 text-on-surface text-sm font-headline font-bold h-9" />
-                <button onclick={saveDateEdit} aria-label="Datum speichern" class="w-9 h-9 flex items-center justify-center bg-primary text-on-primary rounded-lg active:scale-95 transition-transform border-none shrink-0">
-                  <span class="material-symbols-outlined" style="font-size:18px">check</span>
-                </button>
-                <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen" class="w-9 h-9 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-lg active:scale-95 transition-transform border-none shrink-0">
-                  <span class="material-symbols-outlined" style="font-size:18px">close</span>
-                </button>
+          {#each student.generalNotes.slice().reverse() as entry, i (entry.id)}
+            <div class="relative pl-10 {i > 0 ? 'opacity-60' : ''}">
+              <!-- Progress Pip -->
+              <div class="absolute left-1 top-1.5 w-4 h-4 rounded-full border-2 {i === 0 ? 'border-surface-variant bg-background' : 'border-outline-variant bg-background'} flex items-center justify-center">
+                {#if i === 0}
+                  <div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+                {/if}
               </div>
-            {:else}
-              <div class="flex items-center gap-1 mb-4">
-                <span class="text-sm font-headline font-bold text-on-surface-variant">{formatDate(entry.entryDate)}</span>
-                <button onclick={() => { editingDateId = entry._id; editingDateValue = entry.entryDate; }}
-                  class="w-7 h-7 ml-1 flex items-center justify-center rounded-lg bg-surface-container-highest text-outline-variant hover:bg-surface-variant hover:text-primary transition-colors border-none" aria-label="Datum bearbeiten">
-                  <span class="material-symbols-outlined" style="font-size:15px">edit</span>
-                </button>
-              </div>
-            {/if}
-
-            {#if editingEntryId === entry._id}
-              <!-- Editing Mode -->
-              <div class="bg-surface-container-highest p-6 rounded-2xl shadow-xl shadow-black/20">
-                <textarea
-                  bind:value={editingText}
-                  rows="4"
-                  placeholder="Notiz schreiben…"
-                  class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
-                ></textarea>
-                <label class="block mt-4">
-                  <span class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Hinweis (optional)</span>
-                  <textarea
-                    bind:value={editingRemark}
-                    rows="2"
-                    placeholder="Hausaufgabe, Merksatz, TODO…"
-                    class="w-full mt-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
-                  ></textarea>
-                </label>
-                <div class="flex gap-3 mt-4">
-                  <button onclick={saveEditEntry} class="flex-1 bg-primary text-on-primary py-3 rounded-xl active:scale-95 transition-transform" aria-label="Speichern">
-                    <span class="material-symbols-outlined text-[20px]">check</span>
+              
+              {#if editingGeneralDate === entry.id}
+                <div class="flex items-center gap-2 mb-4">
+                  <input type="date" bind:value={editingGeneralDateValue}
+                    class="bg-surface-container-low border-none rounded-lg px-3 flex-1 text-on-surface text-sm font-headline font-bold h-9" />
+                  <button onclick={saveGeneralDateEdit} aria-label="Datum speichern" class="w-9 h-9 flex items-center justify-center bg-surface-variant text-on-surface rounded-lg active:scale-95 transition-transform border-none shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:18px">check</span>
                   </button>
-                  <button onclick={cancelEditEntry} class="flex-1 bg-surface-container-low text-on-surface py-3 rounded-xl active:scale-95 transition-transform" aria-label="Abbrechen">
-                    <span class="material-symbols-outlined text-[20px]">close</span>
-                  </button>
-                  <button
-                    onclick={() => { removeEntry(entry); cancelEditEntry(); }}
-                    class="w-12 h-12 flex items-center justify-center bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform border-none shrink-0"
-                    aria-label="Löschen"
-                  >
-                    <span class="material-symbols-outlined">delete</span>
+                  <button onclick={() => { editingGeneralDate = null; }} aria-label="Abbrechen" class="w-9 h-9 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-lg active:scale-95 transition-transform border-none shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:18px">close</span>
                   </button>
                 </div>
-              </div>
-            {:else if i === 0}
-              <!-- Active/First entry -->
-              <div
-                class="bg-surface-container-low p-6 rounded-2xl shadow-xl shadow-black/20 cursor-pointer hover:bg-surface-container transition-colors"
-                onclick={() => startEditEntry(entry)}
-                role="button"
-                tabindex="0"
-                onkeydown={(e) => e.key === 'Enter' && startEditEntry(entry)}
-              >
-                <p class="text-on-surface leading-relaxed whitespace-pre-wrap">
-                  {entry.text || '(leer — tippen zum Bearbeiten)'}
-                </p>
-                {#if entry.remark}
-                  <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-primary">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2">Hinweis</p>
-                    <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+              {:else}
+                <div class="flex items-center gap-1 mb-4">
+                  <span class="text-sm font-headline font-bold text-on-surface-variant">{formatDate(entry.entryDate)}</span>
+                  <button onclick={() => { editingGeneralDate = entry.id; editingGeneralDateValue = entry.entryDate; }}
+                    class="w-7 h-7 ml-1 flex items-center justify-center rounded-lg bg-surface-container-highest text-outline-variant hover:bg-surface-variant hover:text-primary transition-colors border-none" aria-label="Datum bearbeiten">
+                    <span class="material-symbols-outlined" style="font-size:15px">edit</span>
+                  </button>
+                </div>
+              {/if}
+
+              {#if editingGeneralEntryId === entry.id}
+                <!-- Editing Mode -->
+                <div class="bg-surface-container-highest p-6 rounded-2xl shadow-xl shadow-black/20">
+                  <textarea
+                    bind:value={editingGeneralText}
+                    rows="4"
+                    placeholder="Notiz schreiben…"
+                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
+                  ></textarea>
+                  <label class="block mt-4">
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Hinweis (optional)</span>
+                    <textarea
+                      bind:value={editingGeneralRemark}
+                      rows="2"
+                      placeholder="Hausaufgabe, Merksatz, TODO…"
+                      class="w-full mt-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
+                    ></textarea>
+                  </label>
+                  <div class="flex gap-3 mt-4">
+                    <button onclick={saveEditGeneralEntry} class="flex-1 bg-surface-variant text-on-surface py-3 rounded-xl active:scale-95 transition-transform" aria-label="Speichern">
+                      <span class="material-symbols-outlined text-[20px]">check</span>
+                    </button>
+                    <button onclick={cancelEditGeneralEntry} class="flex-1 bg-surface-container-low text-on-surface py-3 rounded-xl active:scale-95 transition-transform" aria-label="Abbrechen">
+                      <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                    <button
+                      onclick={() => { removeGeneralEntry(entry); cancelEditGeneralEntry(); }}
+                      class="w-12 h-12 flex items-center justify-center bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform border-none shrink-0"
+                      aria-label="Löschen"
+                    >
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
                   </div>
+                </div>
+              {:else if i === 0}
+                <!-- Active/First entry -->
+                <div
+                  class="bg-surface-container-low p-6 rounded-2xl shadow-xl shadow-black/20 cursor-pointer hover:bg-surface-container transition-colors"
+                  onclick={() => startEditGeneralEntry(entry)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => e.key === 'Enter' && startEditGeneralEntry(entry)}
+                >
+                  <p class="text-on-surface leading-relaxed whitespace-pre-wrap">
+                    {entry.text || '(leer — tippen zum Bearbeiten)'}
+                  </p>
+                  {#if entry.remark}
+                    <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-surface-variant">
+                      <p class="text-[10px] uppercase tracking-[0.2em] text-surface-variant font-bold mb-2">Hinweis</p>
+                      <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+                    </div>
+                  {/if}
+                </div>
+              {:else}
+                <div
+                  class="bg-surface-container-low p-6 rounded-2xl cursor-pointer hover:bg-surface-container transition-colors"
+                  onclick={() => startEditGeneralEntry(entry)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => e.key === 'Enter' && startEditGeneralEntry(entry)}
+                >
+                  <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+                    {entry.text || '(leer — tippen zum Bearbeiten)'}
+                  </p>
+                  {#if entry.remark}
+                    <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-surface-variant">
+                      <p class="text-[10px] uppercase tracking-[0.2em] text-surface-variant font-bold mb-2">Hinweis</p>
+                      <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
+    {:else}
+      <!-- Song Entries Tab -->
+      {#if songs.length === 0}
+        <p class="text-center text-outline-variant py-8">Noch keine Songs. Tipp auf + in der Tab-Leiste.</p>
+      {:else if entries.length === 0}
+        <p class="text-center text-outline-variant py-8">Noch keine Einträge. Tipp auf "+ Heute".</p>
+      {:else}
+        <div class="space-y-10 relative">
+          <!-- Vertical Timeline Line -->
+          <div class="absolute left-3 top-2 bottom-0 w-[1px] bg-gradient-to-b from-primary/40 to-transparent"></div>
+
+          {#each entries as entry, i}
+            <div class="relative pl-10 {i > 0 ? 'opacity-60' : ''}">
+              <!-- Progress Pip -->
+              <div class="absolute left-1 top-1.5 w-4 h-4 rounded-full border-2 {i === 0 ? 'border-primary bg-background' : 'border-outline-variant bg-background'} flex items-center justify-center">
+                {#if i === 0}
+                  <div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
                 {/if}
               </div>
-            {:else}
-              <div
-                class="bg-surface-container-low p-6 rounded-2xl cursor-pointer hover:bg-surface-container transition-colors"
-                onclick={() => startEditEntry(entry)}
-                role="button"
-                tabindex="0"
-                onkeydown={(e) => e.key === 'Enter' && startEditEntry(entry)}
-              >
-                <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
-                  {entry.text || '(leer — tippen zum Bearbeiten)'}
-                </p>
-                {#if entry.remark}
-                  <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-primary">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2">Hinweis</p>
-                    <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+              {#if editingDateId === entry._id}
+                <div class="flex items-center gap-2 mb-4">
+                  <input type="date" bind:value={editingDateValue}
+                    class="bg-surface-container-low border-none rounded-lg px-3 flex-1 text-on-surface text-sm font-headline font-bold h-9" />
+                  <button onclick={saveDateEdit} aria-label="Datum speichern" class="w-9 h-9 flex items-center justify-center bg-primary text-on-primary rounded-lg active:scale-95 transition-transform border-none shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:18px">check</span>
+                  </button>
+                  <button onclick={() => { editingDateId = null; }} aria-label="Abbrechen" class="w-9 h-9 flex items-center justify-center bg-surface-container-low text-on-surface-variant rounded-lg active:scale-95 transition-transform border-none shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:18px">close</span>
+                  </button>
+                </div>
+              {:else}
+                <div class="flex items-center gap-1 mb-4">
+                  <span class="text-sm font-headline font-bold text-on-surface-variant">{formatDate(entry.entryDate)}</span>
+                  <button onclick={() => { editingDateId = entry._id; editingDateValue = entry.entryDate; }}
+                    class="w-7 h-7 ml-1 flex items-center justify-center rounded-lg bg-surface-container-highest text-outline-variant hover:bg-surface-variant hover:text-primary transition-colors border-none" aria-label="Datum bearbeiten">
+                    <span class="material-symbols-outlined" style="font-size:15px">edit</span>
+                  </button>
+                </div>
+              {/if}
+
+              {#if editingEntryId === entry._id}
+                <!-- Editing Mode -->
+                <div class="bg-surface-container-highest p-6 rounded-2xl shadow-xl shadow-black/20">
+                  <textarea
+                    bind:value={editingText}
+                    rows="4"
+                    placeholder="Notiz schreiben…"
+                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
+                  ></textarea>
+                  <label class="block mt-4">
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Hinweis (optional)</span>
+                    <textarea
+                      bind:value={editingRemark}
+                      rows="2"
+                      placeholder="Hausaufgabe, Merksatz, TODO…"
+                      class="w-full mt-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface leading-relaxed resize-none"
+                    ></textarea>
+                  </label>
+                  <div class="flex gap-3 mt-4">
+                    <button onclick={saveEditEntry} class="flex-1 bg-primary text-on-primary py-3 rounded-xl active:scale-95 transition-transform" aria-label="Speichern">
+                      <span class="material-symbols-outlined text-[20px]">check</span>
+                    </button>
+                    <button onclick={cancelEditEntry} class="flex-1 bg-surface-container-low text-on-surface py-3 rounded-xl active:scale-95 transition-transform" aria-label="Abbrechen">
+                      <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                    <button
+                      onclick={() => { removeEntry(entry); cancelEditEntry(); }}
+                      class="w-12 h-12 flex items-center justify-center bg-error-container text-on-error-container rounded-xl active:scale-95 transition-transform border-none shrink-0"
+                      aria-label="Löschen"
+                    >
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
                   </div>
-                {/if}
-              </div>
-            {/if}
-          </div>
-        {/each}
-      </div>
+                </div>
+              {:else if i === 0}
+                <!-- Active/First entry -->
+                <div
+                  class="bg-surface-container-low p-6 rounded-2xl shadow-xl shadow-black/20 cursor-pointer hover:bg-surface-container transition-colors"
+                  onclick={() => startEditEntry(entry)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => e.key === 'Enter' && startEditEntry(entry)}
+                >
+                  <p class="text-on-surface leading-relaxed whitespace-pre-wrap">
+                    {entry.text || '(leer — tippen zum Bearbeiten)'}
+                  </p>
+                  {#if entry.remark}
+                    <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-primary">
+                      <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2">Hinweis</p>
+                      <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+                    </div>
+                  {/if}
+                </div>
+              {:else}
+                <div
+                  class="bg-surface-container-low p-6 rounded-2xl cursor-pointer hover:bg-surface-container transition-colors"
+                  onclick={() => startEditEntry(entry)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => e.key === 'Enter' && startEditEntry(entry)}
+                >
+                  <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+                    {entry.text || '(leer — tippen zum Bearbeiten)'}
+                  </p>
+                  {#if entry.remark}
+                    <div class="mt-4 bg-surface-container-highest rounded-xl p-4 border-l-4 border-primary">
+                      <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2">Hinweis</p>
+                      <p class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">{entry.remark}</p>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
     {/if}
   </section>
 
   <!-- FAB: Floating Action Button -->
-  {#if songs.length > 0}
+  {#if activeSongIndex === 0 || songs.length > 0}
     <div class="fixed bottom-24 right-6 z-50">
       <button
-        onclick={addEntry}
-        class="flex items-center gap-2 px-6 py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-extrabold rounded-2xl fab-shadow shadow-primary-lg active:scale-90 transition-transform"
+        onclick={activeSongIndex === 0 ? addGeneralNote : addEntry}
+        class="flex items-center gap-2 px-6 py-4 bg-gradient-to-br {activeSongIndex === 0 ? 'from-surface-variant to-surface-container-highest text-on-surface' : 'from-primary to-primary-container text-on-primary'} font-headline font-extrabold rounded-2xl fab-shadow shadow-primary-lg active:scale-90 transition-transform"
       >
         <span class="material-symbols-outlined font-bold" style="font-variation-settings: 'FILL' 0, 'wght' 700;">add</span>
-        <span>HEUTE</span>
+        <span>{activeSongIndex === 0 ? 'NOTIZ' : 'HEUTE'}</span>
       </button>
     </div>
   {/if}

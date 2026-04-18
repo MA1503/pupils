@@ -1,7 +1,8 @@
 // src/lib/repo.ts
 import { getLocal } from './db';
+import { ulid } from 'ulid';
 import { studentId, songId, entryId, now, today, ulidOf } from './ids';
-import type { Student, Song, Entry } from './types';
+import type { Student, Song, Entry, Billing, GeneralEntry } from './types';
 
 async function putLatest<T extends { _id: string; _rev?: string }>(
   db: PouchDB.Database,
@@ -155,4 +156,79 @@ export function searchStudents(students: Student[], query: string): Student[] {
   const q = query.toLowerCase().trim();
   if (!q) return students;
   return students.filter(s => s.name.toLowerCase().includes(q));
+}
+
+// ---- Billing ----
+
+/**
+ * Bucht eine reguläre Stunde auf das Abrechnungsmodell
+ * Nur bei card oder contract
+ */
+export async function chargeLesson(student: Student): Promise<Student> {
+  if (!student.billing || student.billing.type === 'free') {
+    return student;
+  }
+  
+  const charge = { date: today(), source: 'regular' as const };
+  
+  const updatedBilling: Billing = {
+    ...student.billing,
+    charges: [...(student.billing.charges || []), charge]
+  };
+  
+  return updateStudent(student, { billing: updatedBilling });
+}
+
+/**
+ * Fügt ein Nachholtermin-Datum hinzu
+ */
+export async function addMakeupDate(student: Student, dateISO: string): Promise<Student> {
+  const updatedMakeupDates = [...(student.makeupDates || []), dateISO];
+  return updateStudent(student, { makeupDates: updatedMakeupDates });
+}
+
+/**
+ * Wechselt das Abrechnungsmodell
+ * Schiebt altes billing in billingHistory
+ */
+export async function switchBilling(student: Student, newBilling: Billing): Promise<Student> {
+  const updatedHistory = [...(student.billingHistory || [])];
+  if (student.billing && student.billing.type !== 'free') {
+    updatedHistory.push(student.billing);
+  }
+  
+  return updateStudent(student, { 
+    billing: newBilling, 
+    billingHistory: updatedHistory 
+  });
+}
+
+// ---- General Entries (embedded in Student) ----
+
+export async function addGeneralEntry(student: Student, text: string, remark?: string): Promise<Student> {
+  const entry: GeneralEntry = {
+    id: ulid(),
+    entryDate: today(),
+    text,
+    remark,
+    createdAt: now(),
+    updatedAt: now()
+  };
+  
+  const updatedNotes = [...(student.generalNotes || []), entry];
+  return updateStudent(student, { generalNotes: updatedNotes });
+}
+
+export async function updateGeneralEntry(student: Student, entryId: string, text: string, remark?: string): Promise<Student> {
+  const updatedNotes = (student.generalNotes || []).map(e => 
+    e.id === entryId 
+      ? { ...e, text, remark, updatedAt: now() }
+      : e
+  );
+  return updateStudent(student, { generalNotes: updatedNotes });
+}
+
+export async function deleteGeneralEntry(student: Student, entryId: string): Promise<Student> {
+  const updatedNotes = (student.generalNotes || []).filter(e => e.id !== entryId);
+  return updateStudent(student, { generalNotes: updatedNotes });
 }

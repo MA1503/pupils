@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { listStudents, searchStudents } from '$lib/repo';
   import { students, sortedStudents, sortKey } from '$lib/stores';
+  import BillingBadge from '$lib/components/BillingBadge.svelte';
 
   let query = $state('');
   let loading = $state(true);
@@ -97,7 +98,10 @@
             <span class="material-symbols-outlined text-outline text-xl">person</span>
           </div>
           <div>
-            <h3 class="font-headline text-lg font-bold text-on-surface tracking-tight">{student.name}</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="font-headline text-lg font-bold text-on-surface tracking-tight">{student.name}</h3>
+              <BillingBadge billing={student.billing} />
+            </div>
             <p class="font-body text-sm text-outline">{student.lessonSlot || 'Kein Termin'}</p>
           </div>
         </div>

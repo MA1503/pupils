@@ -1,5 +1,70 @@
 # Changelog
 
+## v1.2.0 — 2026-04-18
+
+### Feature: Termin strukturiert + Cadence
+- Neuer `Schedule` Typ mit `weekday`, `time`, `cadence` (weekly/biweekly-even/biweekly-odd)
+- `parseSlotToSchedule()` parst Freitext-Termine automatisch → strukturiertes Format
+- `ScheduleInput.svelte` Komponente für strukturierte Eingabe
+- Unterstützung für zweiwöchentliche Termine (gerade/ungerade Kalenderwochen)
+- Kalenderwoche und gerade/ungerade Anzeige in Einstellungen
+
+### Feature: Abrechnungsmodelle (Billing)
+- Drei Modelltypen: `free`, `card` (10er-Karte), `contract` (Festvertrag)
+- `BillingBadge.svelte` zeigt Status an (verbleibende Stunden, Vertragsbeginn)
+- "Stunde abrechnen" Button reduziert 10er-Karte
+- Modellwechsel speichert Historie in `billingHistory`
+
+### Feature: Verschieben / Nachholtermine
+- "Verschieben" Button öffnet Datums-Input
+- Makeup-Datum erscheint in "Heute" unabhängig vom regulären Termin
+- Vergangene Makeup-Daten werden automatisch ausgefiltert
+
+### Feature: Repertoire "Allgemein"
+- Neuer "Allgemein"-Tab auf Schüler-Detailseite (Position 0, grau statt pink)
+- `generalNotes` als eingebettetes Array im Student-Doc (keine separate PouchDB-Docs)
+- Einträge in "Allgemein" erscheinen nicht in der Bibliothek
+
+### Feature: Bibliothek-Gruppierung
+- Songs werden nach normalisiertem Titel gruppiert
+- `<details>`-Element pro Songtitel zeigt Anzahl der Schüler
+- Aufklappen zeigt alle Schüler mit Links
+
+### Feature: Ferien + Feiertage
+- Bundesland-Auswahl in Einstellungen (16 deutsche Bundesländer)
+- Automatischer API-Abruf von openholidaysapi.org / ferien-api.de
+- Manuelle Feiertage können hinzugefügt werden (bleiben bei API-Refresh erhalten)
+- Ferien werden in "Heute" erkannt und angezeigt
+- Nächster Schultag wird angezeigt wenn heute keine Schüler
+
+### Feature: Sync-Status-Dot + Studio-Name
+- Farbiger Status-Dot in Header (grün=aktiv, gelb=pausiert, rot=fehler, grau=idle)
+- Tap auf Dot navigiert zu Einstellungen
+- Studio-Name via `/studio.json` Runtime-Config (von `run.sh` geschrieben)
+- Header zeigt Studio-Name an (leer wenn nicht gesetzt)
+
+### Migrationen (einmalig, idempotent)
+- **Migration 1**: `lessonSlot` → `schedule` (automatische Konvertierung)
+- **Migration 2**: Billing-Default (`free` für alle bestehenden Schüler)
+- **Migration 3**: "Allg."/"Allgemein" Songs → `generalNotes` (Song wird archiviert)
+
+### Files Changed
+- `app/src/lib/date.ts` — NEU: Schedule-Parser, ISO-Wochennummer
+- `app/src/lib/types.ts` — Schedule, Billing, GeneralEntry, Holiday, AppSettings
+- `app/src/lib/stores.ts` — lessonSortKey nutzt schedule
+- `app/src/lib/repo.ts` — Billing + GeneralEntry CRUD Funktionen
+- `app/src/lib/holidays.ts` — NEU: Ferien-API, Bundesländer
+- `app/src/lib/components/ScheduleInput.svelte` — NEU
+- `app/src/lib/components/BillingBadge.svelte` — NEU
+- `app/src/routes/+layout.svelte` — Sync-Dot, Studio-Name, Migrations
+- `app/src/routes/+page.svelte` — BillingBadge in Liste
+- `app/src/routes/s/[id]/+page.svelte` — ScheduleInput, Billing, General-Tab
+- `app/src/routes/heute/+page.svelte` — Ferien, Cadence, Next School Day
+- `app/src/routes/bibliothek/+page.svelte` — Gruppierung
+- `app/src/routes/einstellungen/+page.svelte` — Ferien, Bundesland
+- `pupils/rootfs/run.sh` — `/studio.json` schreiben
+- `pupils/config.yaml` — Version 1.2.0
+
 ## v1.1.8 — 2026-04-18
 
 ### Fix: Schwarzer Bildschirm beim Anlegen eines neuen Schülers

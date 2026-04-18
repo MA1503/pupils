@@ -1,5 +1,30 @@
 // src/lib/types.ts
 
+export type Schedule = {
+  weekday: 1 | 2 | 3 | 4 | 5 | 6 | 7;   // ISO: Mo=1 … So=7
+  time: string;                            // "HH:MM"
+  cadence: 'weekly' | 'biweekly-even' | 'biweekly-odd';
+};
+
+export type BillingCard = {
+  type: 'card';
+  size: number;           // z.B. 10
+  charges: Array<{ date: string; source: 'regular' | 'makeup' }>;
+};
+
+export type BillingContract = {
+  type: 'contract';
+  startDate: string;      // ISO-Date
+  monthlyRate?: number;
+  charges: Array<{ date: string; source: 'regular' | 'makeup' }>;
+};
+
+export type BillingFree = {
+  type: 'free';
+};
+
+export type Billing = BillingCard | BillingContract | BillingFree;
+
 export type Student = {
   _id: string;          // "student:<ulid>"
   _rev?: string;
@@ -11,6 +36,12 @@ export type Student = {
   archived?: boolean;   // soft-delete
   createdAt: string;    // ISO-DateTime
   updatedAt: string;
+  // v1.2.0 additions
+  schedule?: Schedule;
+  billing?: Billing;
+  billingHistory?: Billing[];   // vorherige Modelle bei Wechsel
+  makeupDates?: string[];       // ISO-Dates für Nachholtermine
+  generalNotes?: GeneralEntry[]; // Allgemeine Einträge (embedded)
 };
 
 export type Song = {
@@ -31,7 +62,17 @@ export type Entry = {
   studentId: string;    // "student:<ulid>"
   entryDate: string;    // ISO-Date, default = heute
   text: string;         // Freitext-Notiz
-  remark?: string;      // NEU: optionaler Hinweis
+  remark?: string;      // optionaler Hinweis
+  createdAt: string;
+  updatedAt: string;
+};
+
+// Eintrag ohne songId — für generalNotes (embedded in Student)
+export type GeneralEntry = {
+  id: string;           // einfache ULID
+  entryDate: string;    // ISO-Date
+  text: string;
+  remark?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -42,4 +83,22 @@ export type PupilsConfig = {
   url: string;   // z.B. "https://pi.tailnet.ts.net/couchdb/pupils"
   user: string;  // "teacher"
   pass: string;
+};
+
+export type Holiday = {
+  _id: string;        // "holiday:<yyyy-mm-dd>"
+  _rev?: string;
+  type: 'holiday';
+  date: string;       // ISO-Date
+  name: string;       // "Karfreitag"
+  source: 'api' | 'manual';
+  region: string;     // Bundesland-Kürzel, z.B. "BY"
+};
+
+export type AppSettings = {
+  _id: 'settings:app';
+  _rev?: string;
+  type: 'settings';
+  bundesland?: string;      // z.B. "BY"
+  holidaysFetchedAt?: string; // ISO-DateTime des letzten API-Abrufs
 };
