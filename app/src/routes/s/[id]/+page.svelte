@@ -44,6 +44,7 @@
   let editingBilling = $state(false);
   let editBillingType = $state<Billing['type']>('free');
   let editCardSize = $state(10);
+  let editCardAlreadyUsed = $state(0);
   let editContractStartDate = $state('');
   let editContractRate = $state<number | undefined>(undefined);
 
@@ -228,9 +229,22 @@
     editingStudent = true;
     editingBilling = false;
     editBillingType = student.billing?.type ?? 'free';
+    editCardAlreadyUsed = 0;
+
     if (student.billing?.type === 'card') {
-      editCardSize = (student.billing as Extract<Billing, { type: 'card' }>).size;
+      const card = student.billing as Extract<Billing, { type: 'card' }>;
+      editCardSize = card.size;
+      editCardAlreadyUsed = card.charges.length;
+    } else if (student.billing?.type === 'free' && student.tariff) {
+      // Pre-fill from old tariff string if not yet migrated
+      const cardMatch = student.tariff.match(/(\d+)er[\s-]*[Kk]arte/i);
+      if (cardMatch) {
+        editBillingType = 'card';
+        editCardSize = parseInt(cardMatch[1], 10);
+        editingBilling = true; // open billing section directly
+      }
     }
+
     if (student.billing?.type === 'contract') {
       const contract = student.billing as Extract<Billing, { type: 'contract' }>;
       editContractStartDate = contract.startDate;
@@ -268,9 +282,17 @@
     
     let newBilling: Billing;
     switch (editBillingType) {
-      case 'card':
-        newBilling = { type: 'card', size: editCardSize, charges: [] };
+      case 'card': {
+        const existingCharges = student.billing?.type === 'card'
+          ? (student.billing as Extract<Billing, { type: 'card' }>).charges
+          : [];
+        // If initial count changed, rebuild charges to match
+        const initialCharges = editCardAlreadyUsed > 0 && existingCharges.length === 0
+          ? Array.from({ length: editCardAlreadyUsed }, () => ({ date: student!.contractStart || new Date().toISOString().slice(0, 10), source: 'regular' as const }))
+          : existingCharges;
+        newBilling = { type: 'card', size: editCardSize, charges: initialCharges };
         break;
+      }
       case 'contract':
         newBilling = { 
           type: 'contract', 
@@ -462,12 +484,30 @@
               </div>
               
               {#if editBillingType === 'card'}
-                <input
-                  type="number"
-                  bind:value={editCardSize}
-                  placeholder="Größe (z.B. 10)"
-                  class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-                />
+                <div class="flex gap-2">
+                  <div class="flex-1">
+                    <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Kartengröße</p>
+                    <input
+                      type="number"
+                      bind:value={editCardSize}
+                      placeholder="z.B. 10"
+                      class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Bereits abgerechnet</p>
+                    <input
+                      type="number"
+                      bind:value={editCardAlreadyUsed}
+                      min="0"
+                      placeholder="0"
+                      class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+                    />
+                  </div>
+                </div>
+                <p class="text-xs text-outline">
+                  Verbleibend: {Math.max(0, editCardSize - editCardAlreadyUsed)} Stunden
+                </p>
               {/if}
               
               {#if editBillingType === 'contract'}
