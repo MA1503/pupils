@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.2.1 — 2026-04-19
+
+### Fix: Abrechnen & Verschieben Buttons sichtbar
+- Buttons waren hinter `billing !== 'free'` versteckt — da Migration alle auf `free` setzte, sah man sie nie
+- "Verschieben" jetzt immer sichtbar; "Abrechnen" nur für Karte/Vertrag (pink)
+- Toast mit 5s Undo nach Abrechnen; Bestätigungs-Dialog wenn Karte leer
+
+### Fix: Billing-Migration
+- Gelbe Warnung wenn altes `tariff`-Feld noch nicht in neues Billing-Modell migriert
+- "Einrichten" öffnet Editor vorbefüllt (z.B. "4er Karte" → Typ=Karte, Größe=4)
+- Neues Feld „Bereits abgerechnet" setzt Zählerstand direkt beim Speichern
+
+### Fix: Schulferien
+- `schulferien-api.de` als zweite Quelle — vorher wurden nur Feiertage geladen, keine Schulferien
+- Schulferien als Range-Dokumente gespeichert, Heute-Ansicht erkennt sie korrekt
+- Einstellungen zeigen jetzt Statuszeile mit Anzahl (Feiertage / Ferientage)
+
+### Fix: Manuelle Feiertage editierbar
+- Inline-Edit für manuelle Einträge in Einstellungen
+- Ausklappbare Liste aller API-geladenen Einträge mit Badge „Ferien"/„Feiertag"
+- Benutzer-Feld in Einstellungen war leer — config wird jetzt in `onMount` geladen
+
+### Feinschliff
+- Schülerkarten auf Heute-Seite: `space-y` → `flex gap-4` (Abstände konsistent)
+- Bibliothek: Song-Eintrags-Padding von 12px auf 16px
+- „Nächstes Mal"-Block: gleiche Optik wie aktuelle Schüler-Karten, vollständig tappbar
+
 ## v1.2.0 — 2026-04-18
 
 ### Feature: Termin strukturiert + Cadence
