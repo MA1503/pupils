@@ -41,7 +41,6 @@
   let editTariff = $state('');
   
   // Billing edit
-  let editingBilling = $state(false);
   let editBillingType = $state<Billing['type']>('free');
   let editCardSize = $state(10);
   let editCardAlreadyUsed = $state(0);
@@ -228,7 +227,6 @@
     editContractStart = student.contractStart;
     editTariff = student.tariff;
     editingStudent = true;
-    editingBilling = false;
     editBillingType = student.billing?.type ?? 'free';
     editCardAlreadyUsed = 0;
 
@@ -242,7 +240,6 @@
       if (cardMatch) {
         editBillingType = 'card';
         editCardSize = parseInt(cardMatch[1], 10);
-        editingBilling = true; // open billing section directly
       }
     }
 
@@ -268,30 +265,23 @@
       lessonSlotStr = `${dayName} ${editSchedule.time}${cadenceStr}`;
     }
     
-    student = await updateStudent(student, {
-      name: editName,
-      schedule: editSchedule ?? undefined,
-      lessonSlot: lessonSlotStr,
-      contractStart: editContractStart,
-      tariff: editTariff
-    });
-    editingStudent = false;
-  }
-  
-  async function saveBilling() {
-    if (!student) return;
-    
+    // Build billing update
     let newBilling: Billing;
     switch (editBillingType) {
       case 'card': {
         const existingCharges = student.billing?.type === 'card'
           ? (student.billing as Extract<Billing, { type: 'card' }>).charges
           : [];
-        // If initial count changed, rebuild charges to match
-        const initialCharges = editCardAlreadyUsed > 0 && existingCharges.length === 0
-          ? Array.from({ length: editCardAlreadyUsed }, () => ({ date: student!.contractStart || new Date().toISOString().slice(0, 10), source: 'regular' as const }))
+        // Always rebuild charges when the number differs from existing (bug fix)
+        const newCharges = editCardAlreadyUsed !== existingCharges.length
+          ? Array.from({ length: editCardAlreadyUsed }, (_, i) =>
+              existingCharges[i] ?? {
+                date: student!.contractStart || new Date().toISOString().slice(0, 10),
+                source: 'regular' as const
+              }
+            )
           : existingCharges;
-        newBilling = { type: 'card', size: editCardSize, charges: initialCharges };
+        newBilling = { type: 'card', size: editCardSize, charges: newCharges };
         break;
       }
       case 'contract':
@@ -306,10 +296,22 @@
         newBilling = { type: 'free' };
     }
     
-    student = await switchBilling(student, newBilling);
-    editingBilling = false;
+    student = await updateStudent(student, {
+      name: editName,
+      schedule: editSchedule ?? undefined,
+      lessonSlot: lessonSlotStr,
+      contractStart: editContractStart,
+      tariff: editTariff
+    });
+    
+    // Apply billing change if different
+    if (student && JSON.stringify(student.billing) !== JSON.stringify(newBilling)) {
+      student = await switchBilling(student, newBilling);
+    }
+    
+    editingStudent = false;
   }
-
+  
   async function toggleArchive() {
     if (!student) return;
     const msg = student.archived
@@ -325,7 +327,7 @@
     if (student.billing.type === 'card') {
       const remaining = (student.billing as import('$lib/types').BillingCard).size
         - (student.billing as import('$lib/types').BillingCard).charges.length;
-      if (remaining <= 0 && !confirm('Karte ist leer — trotzdem abrechnen?')) return;
+      if (remaining <= 0 && !confirm('Karte ist leer — Stunde bei nächster Karte verrechnen?')) return;
     }
 
     previousBilling = student.billing;
@@ -470,76 +472,69 @@
         <div class="border-t border-outline-variant/30 pt-4 mt-4">
           <label class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-2">Abrechnung</label>
           
-          {#if !editingBilling}
-            <div class="flex items-center justify-between bg-surface-container-low p-3 rounded-lg">
-              <span class="text-sm text-on-surface">
-                {student.billing?.type === 'card'
-                  ? `Stundenkarte · ${(student.billing as BillingCard).size}er`
-                  : student.billing?.type === 'contract' ? 'Festvertrag' : 'Frei'}
-              </span>
-              <button onclick={() => editingBilling = true} class="text-primary text-sm font-bold">Ändern</button>
+          <div class="space-y-3 bg-surface-container-low p-4 rounded-lg">
+            <div class="flex flex-wrap gap-2">
+              {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: 'Stundenkarte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
+                <button
+                  onclick={() => editBillingType = opt.key as Billing['type']}
+                  class="px-3 py-1.5 rounded-full text-xs font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
+                >
+                  {opt.label}
+                </button>
+              {/each}
             </div>
-          {:else}
-            <div class="space-y-3 bg-surface-container-low p-4 rounded-lg">
-              <div class="flex flex-wrap gap-2">
-                {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: 'Stundenkarte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
-                  <button
-                    onclick={() => editBillingType = opt.key as Billing['type']}
-                    class="px-3 py-1.5 rounded-full text-xs font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
-                  >
-                    {opt.label}
-                  </button>
-                {/each}
-              </div>
-              
-              {#if editBillingType === 'card'}
-                <div class="flex gap-2">
-                  <div class="flex-1">
-                    <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Kartengröße</p>
-                    <input
-                      type="number"
-                      bind:value={editCardSize}
-                      placeholder="z.B. 10"
-                      class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-                    />
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Bereits abgerechnet</p>
-                    <input
-                      type="number"
-                      bind:value={editCardAlreadyUsed}
-                      min="0"
-                      placeholder="0"
-                      class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-                    />
-                  </div>
+            
+            {#if editBillingType === 'card'}
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Kartengröße</p>
+                  <input
+                    type="number"
+                    bind:value={editCardSize}
+                    placeholder="z.B. 10"
+                    class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+                  />
                 </div>
-                <p class="text-xs text-outline">
-                  Verbleibend: {Math.max(0, editCardSize - editCardAlreadyUsed)} Stunden
-                </p>
-              {/if}
-              
-              {#if editBillingType === 'contract'}
-                <input
-                  type="date"
-                  bind:value={editContractStartDate}
-                  placeholder="Vertragsbeginn"
-                  class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm mb-2"
-                />
-                <input
-                  type="number"
-                  bind:value={editContractRate}
-                  placeholder="Monatlicher Betrag (optional)"
-                  class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-                />
-              {/if}
-              
-              <div class="flex gap-2 pt-2">
-                <button onclick={saveBilling} class="flex-1 bg-primary text-on-primary py-2 rounded-lg text-sm font-bold">Speichern</button>
-                <button onclick={() => editingBilling = false} class="flex-1 bg-surface-container-highest text-on-surface py-2 rounded-lg text-sm font-bold">Abbrechen</button>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <p class="text-[10px] uppercase tracking-widest text-outline font-bold">Bereits abgerechnet</p>
+                    <button
+                      type="button"
+                      onclick={() => editCardAlreadyUsed = 0}
+                      class="text-xs text-primary font-bold"
+                    >
+                      Zurücksetzen
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    bind:value={editCardAlreadyUsed}
+                    min="0"
+                    placeholder="0"
+                    class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+                  />
+                </div>
               </div>
-            </div>
-          {/if}
+              <p class="text-xs text-outline">
+                Verbleibend: {Math.max(0, editCardSize - editCardAlreadyUsed)} Stunden
+              </p>
+            {/if}
+            
+            {#if editBillingType === 'contract'}
+              <input
+                type="date"
+                bind:value={editContractStartDate}
+                placeholder="Vertragsbeginn"
+                class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm mb-2"
+              />
+              <input
+                type="number"
+                bind:value={editContractRate}
+                placeholder="Monatlicher Betrag (optional)"
+                class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+              />
+            {/if}
+          </div>
         </div>
         
         <!-- Archiv-Toggle -->

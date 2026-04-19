@@ -15,5 +15,7 @@ stack/.env
 
 # Claude-Settings und lokale Arbeitsfiles
 /.claude/settings.json
+/CLAUDE.md
+/AGENTS.md
 /archive/
 /task.md

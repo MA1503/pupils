@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.2.5 — 2026-04-19
+
+### Fix: Bibliothek-Optik
+- Avatar aus aufgeklappten Song-Karten entfernt
+- Songtitel und Schüler-Karten jetzt bündig (px-6 statt px-4)
+- Mehr Abstand unterhalb der letzten Schüler-Karte (pb-6)
+
+### Feature: Abrechnung direkt bearbeitbar
+- Kein zweistufiges "Ändern → Speichern" mehr — Abrechnungsfelder direkt im Bearbeitungsformular
+- Nur noch ein "Speichern"-Knopf für alle Änderungen
+- Neuer "Zurücksetzen"-Button setzt Kartenzähler auf 0
+- Fix: Manuelle Änderung von "Bereits abgerechnet" greift jetzt auch bei befülltem Zähler
+- Freundlichere Bestätigung beim Abrechnen über Kartenende
+
 ## v1.2.4 — 2026-04-19
 
 ### Feature: Versionsnummer in Einstellungen
@@ -7,7 +21,6 @@
 - `package.json` wird ab jetzt mit `config.yaml` synchron gehalten
 
 ### UI: Bibliothek-Optik wie Schüler-Liste
-- Aufgeklappte Song-Karten zeigen jetzt Person-Avatar-Kreis + fetten Namen (`font-headline`)
 - Abstand unter dem letzten Schüler im aufgeklappten Song gleich groß wie Abstand zwischen Schülern
 - `rounded-xl` statt `rounded-lg` für konsistenteres Kartendesign
 
