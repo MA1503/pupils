@@ -84,7 +84,7 @@
               </div>
               <span class="material-symbols-outlined text-outline-variant">expand_more</span>
             </summary>
-            <div class="px-5 pb-5 space-y-3">
+            <div class="px-5 pb-5 space-y-4">
               {#each items as {song, student} (song._id)}
                 <a
                   href="/s/{song.studentId}?song={songUlid(song)}"
