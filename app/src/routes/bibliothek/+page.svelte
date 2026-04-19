@@ -84,14 +84,19 @@
               </div>
               <span class="material-symbols-outlined text-outline-variant">expand_more</span>
             </summary>
-            <div class="px-5 pb-5 space-y-4">
+            <div class="px-4 pb-4 space-y-4">
               {#each items as {song, student} (song._id)}
                 <a
                   href="/s/{song.studentId}?song={songUlid(song)}"
-                  class="block bg-surface-container-low p-4 rounded-lg flex items-center justify-between active:scale-[0.98] transition-transform"
+                  class="block bg-surface-container-low p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
                 >
-                  <span class="text-sm text-on-surface-variant">{student.name}</span>
-                  <span class="material-symbols-outlined text-outline-variant text-sm">chevron_right</span>
+                  <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/10">
+                      <span class="material-symbols-outlined text-outline">person</span>
+                    </div>
+                    <span class="font-headline font-bold text-on-surface">{student.name}</span>
+                  </div>
+                  <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
                 </a>
               {/each}
             </div>

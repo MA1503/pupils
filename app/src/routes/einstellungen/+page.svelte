@@ -4,6 +4,7 @@
   import { loadConfig, getLocal } from '$lib/db';
   import { BUNDESLAENDER, loadSettings, saveSettings, fetchAndStoreHolidays, listHolidays, addManualHoliday, removeHoliday } from '$lib/holidays';
   import { getISOWeek, weekParity } from '$lib/date';
+  import { version } from '$app/environment';
   import type { PupilsConfig, Holiday, AppSettings } from '$lib/types';
 
   let config = $state<PupilsConfig | null>(null);
@@ -143,6 +144,12 @@
     <p class="text-sm text-on-surface-variant font-body">
       Aktuell KW {currentKW} · {currentParity === 'even' ? 'gerade' : 'ungerade'} Woche
     </p>
+  </div>
+
+  <!-- Version -->
+  <div class="bg-surface-container-highest p-4 rounded-xl mb-4">
+    <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Version</p>
+    <p class="text-sm text-on-surface-variant font-body">v{version}</p>
   </div>
 
   <!-- Connection Info -->

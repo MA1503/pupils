@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.2.4 — 2026-04-19
+
+### Feature: Versionsnummer in Einstellungen
+- Einstellungen-Seite zeigt jetzt die aktuelle App-Version (z.B. "v1.2.4")
+- `package.json` wird ab jetzt mit `config.yaml` synchron gehalten
+
+### UI: Bibliothek-Optik wie Schüler-Liste
+- Aufgeklappte Song-Karten zeigen jetzt Person-Avatar-Kreis + fetten Namen (`font-headline`)
+- Abstand unter dem letzten Schüler im aufgeklappten Song gleich groß wie Abstand zwischen Schülern
+- `rounded-xl` statt `rounded-lg` für konsistenteres Kartendesign
+
 ## v1.2.3 — 2026-04-19
 
 ### Fix: Sonntags-Schüler zeigten "undefined" im Termin
