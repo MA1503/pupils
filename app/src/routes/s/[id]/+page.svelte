@@ -54,6 +54,7 @@
   // Makeup date
   let showMakeupInput = $state(false);
   let makeupDateValue = $state('');
+  let makeupTimeValue = $state('');
 
   // Toast
   let toast = $state<{ msg: string; undoFn?: () => Promise<void> } | null>(null);
@@ -73,7 +74,7 @@
   let editingGeneralDate = $state<string | null>(null);
   let editingGeneralDateValue = $state('');
 
-  const WEEKDAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const WEEKDAY_NAMES: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 7: 'So' };
 
   onMount(async () => {
     if (id === 'new') {
@@ -345,11 +346,14 @@
   
   async function handleAddMakeupDate() {
     if (!student || !makeupDateValue) return;
+    const timeStr = makeupTimeValue || undefined;
     const dateLabel = new Date(makeupDateValue + 'T12:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: 'long' });
-    student = await addMakeupDate(student, makeupDateValue);
+    const timeLabel = timeStr ? ` um ${timeStr}` : '';
+    student = await addMakeupDate(student, { date: makeupDateValue, time: timeStr });
     showMakeupInput = false;
     makeupDateValue = '';
-    showToast(`Termin auf ${dateLabel} verschoben`);
+    makeupTimeValue = '';
+    showToast(`Termin auf ${dateLabel}${timeLabel} verschoben`);
   }
   
   function formatSchedule(s: Schedule): string {
@@ -626,10 +630,15 @@
             bind:value={makeupDateValue}
             class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm"
           />
+          <input
+            type="time"
+            bind:value={makeupTimeValue}
+            class="w-28 bg-surface-container-low border-none rounded-lg px-3 py-2 text-on-surface text-sm"
+          />
           <button onclick={handleAddMakeupDate} class="px-4 bg-primary text-on-primary rounded-lg text-sm font-bold">
             OK
           </button>
-          <button onclick={() => { showMakeupInput = false; makeupDateValue = ''; }} class="px-4 bg-surface-container-highest text-on-surface rounded-lg text-sm">
+          <button onclick={() => { showMakeupInput = false; makeupDateValue = ''; makeupTimeValue = ''; }} class="px-4 bg-surface-container-highest text-on-surface rounded-lg text-sm">
             ✕
           </button>
         </div>

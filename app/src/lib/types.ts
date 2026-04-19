@@ -40,7 +40,7 @@ export type Student = {
   schedule?: Schedule;
   billing?: Billing;
   billingHistory?: Billing[];   // vorherige Modelle bei Wechsel
-  makeupDates?: string[];       // ISO-Dates für Nachholtermine
+  makeupDates?: Array<string | MakeupSlot>; // ISO-Dates oder Nachholtermin mit Uhrzeit
   generalNotes?: GeneralEntry[]; // Allgemeine Einträge (embedded)
 };
 
@@ -76,6 +76,8 @@ export type GeneralEntry = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type MakeupSlot = { date: string; time?: string };
 
 export type SyncStatus = 'idle' | 'active' | 'paused' | 'error' | 'denied';
 

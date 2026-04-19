@@ -3,8 +3,10 @@
   import { listStudents } from '$lib/repo';
   import { getLocal } from '$lib/db';
   import type { Student, Holiday } from '$lib/types';
-  import { getISOWeek, weekParity } from '$lib/date';
+  import { weekParity } from '$lib/date';
   import { getHolidayForDate as getHoliday } from '$lib/holidays';
+
+  type TodayItem = { student: Student; displayTime: string; isMakeup: boolean; key: string };
 
   const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
   const ISO_WEEKDAYS = [7, 1, 2, 3, 4, 5, 6]; // Sunday=7, Monday=1, etc.
@@ -14,10 +16,8 @@
   let todayHoliday = $state<Holiday | null>(null);
 
   const today = new Date();
-  const todayAbbr = DAYS[today.getDay()];
   const todayISO = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const todayWeekday = ISO_WEEKDAYS[today.getDay()];
-  const todayKW = getISOWeek(today);
   const todayParity = weekParity(today);
 
   onMount(async () => {
@@ -28,7 +28,6 @@
 
   function matchesSchedule(student: Student): boolean {
     if (!student.schedule) {
-      // Fallback: alter Freitext-Match
       return student.lessonSlot?.trimStart().startsWith(DAYS[today.getDay()]) ?? false;
     }
     if (student.schedule.weekday !== todayWeekday) return false;
@@ -39,18 +38,37 @@
     return false;
   }
 
-  // Filter today students based on schedule or makeup dates
-  const todayStudents = $derived(
-    allStudents.filter(s => {
-      if (s.archived) return false;
-      const regularMatch = matchesSchedule(s);
-      const makeupMatch = s.makeupDates?.includes(todayISO);
-      return regularMatch || makeupMatch;
-    })
-  );
+  function getMakeupDate(e: string | { date: string; time?: string }): string {
+    return typeof e === 'string' ? e : e.date;
+  }
+  function getMakeupTime(e: string | { date: string; time?: string }, fallback: string): string {
+    return typeof e === 'object' && e.time ? e.time : fallback;
+  }
+
+  const todayItems = $derived((): TodayItem[] => {
+    const items: TodayItem[] = [];
+    for (const s of allStudents) {
+      if (s.archived) continue;
+      const regularTime = s.schedule?.time || s.lessonSlot || '';
+      if (matchesSchedule(s)) {
+        items.push({ student: s, displayTime: regularTime, isMakeup: false, key: s._id + ':regular' });
+      }
+      for (const entry of (s.makeupDates || [])) {
+        if (getMakeupDate(entry) === todayISO) {
+          const t = getMakeupTime(entry, regularTime);
+          items.push({ student: s, displayTime: t, isMakeup: true, key: s._id + ':makeup:' + t });
+        }
+      }
+    }
+    items.sort((a, b) => a.displayTime.localeCompare(b.displayTime));
+    return items;
+  });
 
   const otherStudents = $derived(
-    allStudents.filter(s => !s.archived && !matchesSchedule(s) && !s.makeupDates?.includes(todayISO))
+    allStudents.filter(s => {
+      if (s.archived) return false;
+      return !todayItems().some(i => i.student._id === s._id);
+    })
   );
 
   // Find next school day with students
@@ -58,14 +76,11 @@
     for (let i = 1; i <= 14; i++) {
       const nextDate = new Date(today);
       nextDate.setDate(today.getDate() + i);
-      const nextISO = nextDate.toISOString().slice(0, 10);
       const nextWeekday = ISO_WEEKDAYS[nextDate.getDay()];
       const nextParity = weekParity(nextDate);
-      
+
       const studentsThatDay = allStudents.filter(s => {
         if (s.archived) return false;
-        // Check if it's a holiday
-        // Note: We can't check async here, so we'll rely on schedule matching
         if (s.schedule && s.schedule.weekday === nextWeekday) {
           const { cadence } = s.schedule;
           if (cadence === 'weekly') return true;
@@ -74,7 +89,7 @@
         }
         return false;
       });
-      
+
       if (studentsThatDay.length > 0) {
         return {
           date: nextDate,
@@ -106,13 +121,13 @@
       <p class="text-on-surface-variant font-headline font-bold text-lg">Ferien · {todayHoliday.name}</p>
       <p class="text-sm text-outline mt-2">Kein Unterricht heute.</p>
     </div>
-  {:else if todayStudents.length === 0}
+  {:else if todayItems().length === 0}
     <!-- Empty State - No lessons today -->
     <div class="bg-surface-container-highest p-8 rounded-2xl text-center">
       <span class="material-symbols-outlined text-outline text-4xl block mb-3">event_available</span>
       <p class="text-on-surface-variant font-headline font-bold text-lg">Heute kein Unterricht</p>
     </div>
-    
+
     <!-- Next school day info -->
     {#if nextDayInfo}
       <div class="mt-6">
@@ -145,9 +160,9 @@
   {:else}
     <!-- Students today -->
     <div class="flex flex-col gap-4">
-      {#each todayStudents as student (student._id)}
+      {#each todayItems() as item (item.key)}
         <a
-          href="/s/{student._id}"
+          href="/s/{item.student._id}"
           class="block bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform shadow-primary"
         >
           <div class="flex items-center gap-4">
@@ -155,10 +170,10 @@
               <span class="material-symbols-outlined text-primary">person</span>
             </div>
             <div>
-              <h3 class="font-headline font-bold text-on-surface">{student.name}</h3>
+              <h3 class="font-headline font-bold text-on-surface">{item.student.name}</h3>
               <p class="text-sm text-outline">
-                {student.schedule?.time || student.lessonSlot}
-                {#if student.makeupDates?.includes(todayISO)}
+                {item.displayTime}
+                {#if item.isMakeup}
                   <span class="text-primary font-bold"> · Nachholtermin</span>
                 {/if}
               </p>

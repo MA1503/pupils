@@ -182,8 +182,9 @@ export async function chargeLesson(student: Student): Promise<Student> {
 /**
  * Fügt ein Nachholtermin-Datum hinzu
  */
-export async function addMakeupDate(student: Student, dateISO: string): Promise<Student> {
-  const updatedMakeupDates = [...(student.makeupDates || []), dateISO];
+export async function addMakeupDate(student: Student, slot: { date: string; time?: string }): Promise<Student> {
+  const entry: import('./types').MakeupSlot | string = slot.time ? slot : slot.date;
+  const updatedMakeupDates = [...(student.makeupDates || []), entry];
   return updateStudent(student, { makeupDates: updatedMakeupDates });
 }
 

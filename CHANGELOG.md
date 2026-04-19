@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.2.3 — 2026-04-19
+
+### Fix: Sonntags-Schüler zeigten "undefined" im Termin
+- `WEEKDAY_NAMES` war ein 0–6-Array; ISO-Weekday 7 (Sonntag) ergab `undefined`
+- Umgestellt auf Record `{ 1: 'Mo' … 7: 'So' }`
+
+### Feature: Verschieben mit Uhrzeit
+- Verschieben-Form hat jetzt ein zweites Feld für die Uhrzeit
+- Ohne Uhrzeit: Verhalten wie bisher (reguläre Unterrichtszeit gilt)
+- Mit Uhrzeit: Schüler erscheint in Heute mit der angegebenen Zeit
+- Toast zeigt "Termin auf 25. April um 12:00 verschoben"
+
+### Feature: Doppelstunden in Heute
+- Schüler kann sowohl regulär als auch als Nachholtermin am gleichen Tag erscheinen
+- Mehrere Nachholtermine am gleichen Tag = mehrere Karten, sortiert nach Uhrzeit
+- Rückwärtskompatibel mit bestehenden `makeupDates`-Strings
+
 ## v1.2.2 — 2026-04-19
 
 ### Fix: Wochentag-Eingabe akzeptiert volle Namen
