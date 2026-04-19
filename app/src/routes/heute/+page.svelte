@@ -116,25 +116,27 @@
     <!-- Next school day info -->
     {#if nextDayInfo}
       <div class="mt-6">
-        <h3 class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4">
+        <p class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4">
           Nächstes Mal · {nextDayInfo.dateStr}
-        </h3>
-        <div class="space-y-3">
+        </p>
+        <div class="flex flex-col gap-3">
           {#each nextDayInfo.students as student (student._id)}
             <a
               href="/s/{student._id}"
-              class="block bg-surface-container-low p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
+              class="block bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
             >
-              <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-outline">person</span>
+              <div class="flex items-center gap-4">
+                <div class="h-11 w-11 rounded-full bg-surface-container-low flex items-center justify-center border border-outline-variant/20">
+                  <span class="material-symbols-outlined text-outline">person</span>
+                </div>
                 <div>
-                  <h3 class="font-headline font-bold text-sm text-on-surface-variant">{student.name}</h3>
-                  <p class="text-xs text-outline">
+                  <h3 class="font-headline font-bold text-on-surface">{student.name}</h3>
+                  <p class="text-sm text-outline">
                     {student.schedule?.time || student.lessonSlot || 'Kein Termin'}
                   </p>
                 </div>
               </div>
-              <span class="material-symbols-outlined text-outline-variant text-sm">chevron_right</span>
+              <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
             </a>
           {/each}
         </div>
@@ -142,7 +144,7 @@
     {/if}
   {:else}
     <!-- Students today -->
-    <div class="space-y-5">
+    <div class="flex flex-col gap-4">
       {#each todayStudents as student (student._id)}
         <a
           href="/s/{student._id}"

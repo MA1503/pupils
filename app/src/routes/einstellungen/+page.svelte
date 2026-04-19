@@ -4,26 +4,30 @@
   import { loadConfig, getLocal } from '$lib/db';
   import { BUNDESLAENDER, loadSettings, saveSettings, fetchAndStoreHolidays, listHolidays, addManualHoliday, removeHoliday } from '$lib/holidays';
   import { getISOWeek, weekParity } from '$lib/date';
-  import type { PupilsConfig, Holiday } from '$lib/types';
+  import type { PupilsConfig, Holiday, AppSettings } from '$lib/types';
 
   let config = $state<PupilsConfig | null>(null);
   let backupRunning = $state(false);
   let backupResult = $state<{ ok: boolean; log: string } | null>(null);
-  
-  let settings = $state<{ bundesland?: string; holidaysFetchedAt?: string }>({});
+
+  let settings = $state<AppSettings>({ _id: 'settings:app', type: 'settings' });
   let holidays = $state<Holiday[]>([]);
   let loadingHolidays = $state(true);
-  
+
   // Manual holiday form
   let manualDate = $state('');
   let manualName = $state('');
 
-  config = loadConfig();
+  // Inline edit for manual holidays
+  let editingHolidayId = $state<string | null>(null);
+  let editingHolidayDate = $state('');
+  let editingHolidayName = $state('');
 
   const currentKW = getISOWeek(new Date());
   const currentParity = weekParity(new Date());
 
   onMount(async () => {
+    config = loadConfig();
     const db = getLocal();
     settings = await loadSettings(db);
     holidays = await listHolidays(
@@ -84,18 +88,49 @@
     );
   }
   
-  async function removeHolidayDate(dateISO: string) {
+  async function removeHolidayDate(holiday: Holiday) {
     const db = getLocal();
-    await removeHoliday(dateISO, db);
+    // For range docs, remove by _id directly; for single-day, remove by date
+    if (holiday.subtype === 'school' || holiday.dateFrom) {
+      const doc = await db.get(holiday._id);
+      await db.remove(doc._id, (doc as { _rev: string })._rev);
+    } else {
+      await removeHoliday(holiday.date!, db);
+    }
+    await reloadHolidays();
+  }
+
+  function startEditHoliday(holiday: Holiday) {
+    editingHolidayId = holiday._id;
+    editingHolidayDate = holiday.date ?? holiday.dateFrom ?? '';
+    editingHolidayName = holiday.name;
+  }
+
+  async function saveEditHoliday(holiday: Holiday) {
+    if (!editingHolidayDate || !editingHolidayName) return;
+    const db = getLocal();
+    const doc = await db.get<Holiday>(holiday._id);
+    await db.put({ ...doc, date: editingHolidayDate, name: editingHolidayName });
+    editingHolidayId = null;
+    await reloadHolidays();
+  }
+
+  async function reloadHolidays() {
+    const db = getLocal();
     holidays = await listHolidays(
       new Date().toISOString().slice(0, 10),
       new Date(new Date().getFullYear() + 1, 11, 31).toISOString().slice(0, 10),
       db
     );
   }
-  
+
   function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  function holidayDisplayDate(h: Holiday): string {
+    if (h.dateFrom && h.dateTo) return `${formatDate(h.dateFrom)} – ${formatDate(h.dateTo)}`;
+    return formatDate(h.date ?? '');
   }
 </script>
 
@@ -147,55 +182,92 @@
       >
         Ferien jetzt aktualisieren
       </button>
-      
+
+      <!-- Status line -->
       {#if settings.holidaysFetchedAt}
-        <p class="text-xs text-outline">
-          Zuletzt aktualisiert: {new Date(settings.holidaysFetchedAt).toLocaleDateString('de-DE')}
+        <p class="text-xs {settings.holidaysFetchResult === 'error' ? 'text-yellow-600' : 'text-outline'}">
+          {settings.holidaysFetchResult === 'error' ? '⚠ Letzter Versuch fehlgeschlagen · ' : ''}Zuletzt: {new Date(settings.holidaysFetchedAt).toLocaleDateString('de-DE')}
+          {#if settings.holidaysCount}
+            · {settings.holidaysCount.public} Feiertage · {settings.holidaysCount.school} Ferientage
+          {/if}
         </p>
       {/if}
-      
+
+      <!-- API holidays list (collapsible) -->
+      {#if !loadingHolidays && holidays.filter(h => h.source === 'api').length > 0}
+        <details class="text-xs">
+          <summary class="cursor-pointer text-outline font-bold uppercase tracking-widest text-[10px] py-1">
+            {holidays.filter(h => h.source === 'api').length} geladene Einträge
+          </summary>
+          <div class="mt-2 space-y-1 max-h-48 overflow-y-auto">
+            {#each holidays.filter(h => h.source === 'api') as h (h._id)}
+              <div class="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg">
+                <div>
+                  <span class="text-on-surface-variant">{h.name}</span>
+                  <span class="ml-2 text-outline">{holidayDisplayDate(h)}</span>
+                </div>
+                <span class="text-[9px] uppercase tracking-widest text-outline border border-outline/20 rounded px-1.5 py-0.5">
+                  {h.subtype === 'school' ? 'Ferien' : 'Feiertag'}
+                </span>
+              </div>
+            {/each}
+          </div>
+        </details>
+      {/if}
+
       <!-- Manual Holiday Form -->
       <div class="border-t border-outline-variant/30 pt-4">
-        <label class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-2">Manueller Feiertag</label>
+        <p class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-2">Manueller Eintrag</p>
         <div class="flex gap-2 mb-2">
-          <input
-            type="date"
-            bind:value={manualDate}
-            class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-          />
-          <input
-            type="text"
-            bind:value={manualName}
-            placeholder="Name"
-            class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-          />
-          <button
-            onclick={addManual}
-            disabled={!manualDate || !manualName}
-            class="px-4 bg-primary text-on-primary rounded-lg text-sm font-bold disabled:opacity-50"
-          >
-            Hinzufügen
+          <input type="date" bind:value={manualDate}
+            class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm" />
+          <input type="text" bind:value={manualName} placeholder="Name"
+            class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm" />
+          <button onclick={addManual} disabled={!manualDate || !manualName}
+            class="px-4 bg-primary text-on-primary rounded-lg text-sm font-bold disabled:opacity-50">
+            +
           </button>
         </div>
       </div>
-      
-      <!-- Manual Holidays List -->
+
+      <!-- Manual entries with inline edit -->
       {#if !loadingHolidays && holidays.filter(h => h.source === 'manual').length > 0}
         <div class="space-y-2">
           <p class="text-[10px] uppercase tracking-widest text-outline font-bold">Manuelle Einträge</p>
           {#each holidays.filter(h => h.source === 'manual') as holiday (holiday._id)}
-            <div class="flex items-center justify-between bg-surface-container-low p-3 rounded-lg">
-              <div>
-                <p class="text-sm text-on-surface">{holiday.name}</p>
-                <p class="text-xs text-outline">{formatDate(holiday.date)}</p>
+            {#if editingHolidayId === holiday._id}
+              <div class="flex gap-2 bg-surface-container-low p-2 rounded-lg">
+                <input type="date" bind:value={editingHolidayDate}
+                  class="flex-1 bg-surface-container-highest border-none rounded-lg px-3 py-1.5 text-on-surface text-sm" />
+                <input type="text" bind:value={editingHolidayName} placeholder="Name"
+                  class="flex-1 bg-surface-container-highest border-none rounded-lg px-3 py-1.5 text-on-surface text-sm" />
+                <button onclick={() => saveEditHoliday(holiday)}
+                  class="w-8 h-8 flex items-center justify-center text-primary">
+                  <span class="material-symbols-outlined text-sm">check</span>
+                </button>
+                <button onclick={() => editingHolidayId = null}
+                  class="w-8 h-8 flex items-center justify-center text-outline-variant">
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
               </div>
-              <button
-                onclick={() => removeHolidayDate(holiday.date)}
-                class="w-8 h-8 flex items-center justify-center text-error-dim rounded-lg hover:bg-surface-container-highest transition-colors"
-              >
-                <span class="material-symbols-outlined text-sm">delete</span>
-              </button>
-            </div>
+            {:else}
+              <div class="flex items-center justify-between bg-surface-container-low p-3 rounded-lg">
+                <div>
+                  <p class="text-sm text-on-surface">{holiday.name}</p>
+                  <p class="text-xs text-outline">{holidayDisplayDate(holiday)}</p>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick={() => startEditHoliday(holiday)}
+                    class="w-8 h-8 flex items-center justify-center text-outline-variant hover:text-primary rounded-lg hover:bg-surface-container-highest transition-colors">
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                  </button>
+                  <button onclick={() => removeHolidayDate(holiday)}
+                    class="w-8 h-8 flex items-center justify-center text-error-dim rounded-lg hover:bg-surface-container-highest transition-colors">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                  </button>
+                </div>
+              </div>
+            {/if}
           {/each}
         </div>
       {/if}

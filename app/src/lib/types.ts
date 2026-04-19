@@ -86,19 +86,24 @@ export type PupilsConfig = {
 };
 
 export type Holiday = {
-  _id: string;        // "holiday:<yyyy-mm-dd>"
+  _id: string;
   _rev?: string;
   type: 'holiday';
-  date: string;       // ISO-Date
-  name: string;       // "Karfreitag"
+  subtype?: 'public' | 'school';  // undefined = legacy public holidays
+  date?: string;       // ISO-Date, single-day public holidays
+  dateFrom?: string;   // ISO-Date, school holiday range start
+  dateTo?: string;     // ISO-Date, school holiday range end
+  name: string;
   source: 'api' | 'manual';
-  region: string;     // Bundesland-Kürzel, z.B. "BY"
+  region: string;
 };
 
 export type AppSettings = {
   _id: 'settings:app';
   _rev?: string;
   type: 'settings';
-  bundesland?: string;      // z.B. "BY"
-  holidaysFetchedAt?: string; // ISO-DateTime des letzten API-Abrufs
+  bundesland?: string;
+  holidaysFetchedAt?: string;
+  holidaysFetchResult?: 'ok' | 'error';
+  holidaysCount?: { public: number; school: number };
 };

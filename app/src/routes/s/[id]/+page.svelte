@@ -53,6 +53,17 @@
   // Makeup date
   let showMakeupInput = $state(false);
   let makeupDateValue = $state('');
+
+  // Toast
+  let toast = $state<{ msg: string; undoFn?: () => Promise<void> } | null>(null);
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  let previousBilling = $state<Student['billing'] | null>(null);
+
+  function showToast(msg: string, undoFn?: () => Promise<void>) {
+    if (toastTimer) clearTimeout(toastTimer);
+    toast = { msg, undoFn };
+    toastTimer = setTimeout(() => { toast = null; }, 5000);
+  }
   
   // General notes editing
   let editingGeneralEntryId = $state<string | null>(null);
@@ -287,7 +298,27 @@
   
   async function handleChargeLesson() {
     if (!student || !student.billing || student.billing.type === 'free') return;
+
+    if (student.billing.type === 'card') {
+      const remaining = (student.billing as import('$lib/types').BillingCard).size
+        - (student.billing as import('$lib/types').BillingCard).charges.length;
+      if (remaining <= 0 && !confirm('Karte ist leer — trotzdem abrechnen?')) return;
+    }
+
+    previousBilling = student.billing;
     student = await chargeLesson(student);
+
+    let msg = 'Stunde abgerechnet';
+    const b = student.billing;
+    if (b?.type === 'card') {
+      const rem = b.size - b.charges.length;
+      msg = `Abgerechnet · noch ${rem} Stunde${rem === 1 ? '' : 'n'}`;
+    }
+
+    const snap = previousBilling;
+    showToast(msg, async () => {
+      if (student && snap) student = await updateStudent(student, { billing: snap });
+    });
   }
   
   async function handleAddMakeupDate() {
@@ -514,44 +545,49 @@
         </div>
       </div>
       
-      <!-- Billing and Makeup Buttons -->
-      {#if student.billing && student.billing.type !== 'free'}
-        <div class="flex gap-2 mt-3">
+      <!-- Billing migration warning -->
+      {#if student.billing?.type === 'free' && student.tariff}
+        <div class="mt-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-yellow-600">Abrechnung nicht eingerichtet</p>
+            <p class="text-xs text-outline mt-0.5">Altes Tarif-Feld: „{student.tariff}"</p>
+          </div>
+          <button onclick={startEditStudent} class="text-xs font-bold text-yellow-600 underline">Einrichten</button>
+        </div>
+      {/if}
+
+      <!-- Abrechnen & Verschieben buttons -->
+      <div class="flex gap-2 mt-3">
+        {#if student.billing && student.billing.type !== 'free'}
           <button
             onclick={handleChargeLesson}
-            class="flex-1 bg-surface-container-low text-on-surface font-headline font-bold py-2 rounded-xl active:scale-95 transition-transform text-sm"
+            class="flex-1 bg-primary text-on-primary font-headline font-bold py-2.5 rounded-xl active:scale-95 transition-transform text-sm"
           >
             Stunde abrechnen
           </button>
-          <button
-            onclick={() => showMakeupInput = !showMakeupInput}
-            class="flex-1 bg-surface-container-low text-on-surface font-headline font-bold py-2 rounded-xl active:scale-95 transition-transform text-sm"
-          >
-            Verschieben
+        {/if}
+        <button
+          onclick={() => showMakeupInput = !showMakeupInput}
+          class="flex-1 bg-surface-container-low text-on-surface font-headline font-bold py-2.5 rounded-xl active:scale-95 transition-transform text-sm"
+        >
+          Verschieben
+        </button>
+      </div>
+
+      {#if showMakeupInput}
+        <div class="flex gap-2 mt-2">
+          <input
+            type="date"
+            bind:value={makeupDateValue}
+            class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+          />
+          <button onclick={handleAddMakeupDate} class="px-4 bg-primary text-on-primary rounded-lg text-sm font-bold">
+            OK
+          </button>
+          <button onclick={() => { showMakeupInput = false; makeupDateValue = ''; }} class="px-4 bg-surface-container-highest text-on-surface rounded-lg text-sm">
+            ✕
           </button>
         </div>
-        
-        {#if showMakeupInput}
-          <div class="flex gap-2 mt-2">
-            <input
-              type="date"
-              bind:value={makeupDateValue}
-              class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-on-surface text-sm"
-            />
-            <button
-              onclick={handleAddMakeupDate}
-              class="px-4 bg-primary text-on-primary rounded-lg text-sm font-bold"
-            >
-              OK
-            </button>
-            <button
-              onclick={() => { showMakeupInput = false; makeupDateValue = ''; }}
-              class="px-4 bg-surface-container-highest text-on-surface rounded-lg text-sm"
-            >
-              ✕
-            </button>
-          </div>
-        {/if}
       {/if}
     {/if}
   </section>
@@ -880,6 +916,21 @@
       {/if}
     {/if}
   </section>
+
+  <!-- Toast -->
+  {#if toast}
+    <div class="fixed bottom-36 left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-5 py-3 shadow-xl">
+      <span class="text-sm font-headline font-bold">{toast.msg}</span>
+      {#if toast.undoFn}
+        <button
+          onclick={async () => { await toast?.undoFn?.(); toast = null; if (toastTimer) clearTimeout(toastTimer); }}
+          class="text-primary font-bold text-sm ml-4 shrink-0"
+        >
+          Rückgängig
+        </button>
+      {/if}
+    </div>
+  {/if}
 
   <!-- FAB: Floating Action Button -->
   {#if activeSongIndex === 0 || songs.length > 0}
