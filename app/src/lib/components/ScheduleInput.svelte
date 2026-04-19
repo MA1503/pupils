@@ -9,13 +9,13 @@
   let { value, onchange }: Props = $props();
   
   const WEEKDAYS = [
-    { key: 'Mo', label: 'Mo', value: 1 },
-    { key: 'Di', label: 'Di', value: 2 },
-    { key: 'Mi', label: 'Mi', value: 3 },
-    { key: 'Do', label: 'Do', value: 4 },
-    { key: 'Fr', label: 'Fr', value: 5 },
-    { key: 'Sa', label: 'Sa', value: 6 },
-    { key: 'So', label: 'So', value: 7 }
+    { key: 'Mo', label: 'Montag', value: 1 },
+    { key: 'Di', label: 'Dienstag', value: 2 },
+    { key: 'Mi', label: 'Mittwoch', value: 3 },
+    { key: 'Do', label: 'Donnerstag', value: 4 },
+    { key: 'Fr', label: 'Freitag', value: 5 },
+    { key: 'Sa', label: 'Samstag', value: 6 },
+    { key: 'So', label: 'Sonntag', value: 7 }
   ];
   
   const CADENCES = [
@@ -34,23 +34,23 @@
   $effect(() => {
     if (value) {
       const day = WEEKDAYS.find(w => w.value === value.weekday);
-      weekdayInput = day?.key ?? '';
+      weekdayInput = day?.label ?? '';
       timeInput = value.time;
       cadence = value.cadence;
     }
   });
-  
+
   function updateFilteredWeekdays() {
     const input = weekdayInput.toLowerCase();
-    filteredWeekdays = WEEKDAYS.filter(w => 
-      w.key.toLowerCase().startsWith(input) || 
+    filteredWeekdays = WEEKDAYS.filter(w =>
+      w.key.toLowerCase().startsWith(input) ||
       w.label.toLowerCase().startsWith(input)
     );
     showWeekdayDropdown = filteredWeekdays.length > 0 && input.length > 0;
   }
-  
+
   function selectWeekday(day: typeof WEEKDAYS[0]) {
-    weekdayInput = day.key;
+    weekdayInput = day.label;
     showWeekdayDropdown = false;
     emitChange();
   }
@@ -83,7 +83,10 @@
   }
   
   function emitChange() {
-    const day = WEEKDAYS.find(w => w.key.toLowerCase() === weekdayInput.toLowerCase());
+    const day = WEEKDAYS.find(w =>
+      w.key.toLowerCase() === weekdayInput.toLowerCase() ||
+      w.label.toLowerCase() === weekdayInput.toLowerCase()
+    );
     if (!day) {
       onchange(null);
       return;
@@ -122,7 +125,7 @@
   }
 </script>
 
-<div class="space-y-3">
+<div class="space-y-5">
   <div class="flex gap-3">
     <!-- Weekday Input -->
     <div class="relative flex-1">

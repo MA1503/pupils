@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.2.2 — 2026-04-19
+
+### Fix: Wochentag-Eingabe akzeptiert volle Namen
+- "Montag", "Dienstag" etc. funktionieren jetzt genauso wie "Mo", "Di"
+- Dropdown zeigt volle Namen; nach Auswahl bleibt der volle Name stehen
+- Mehr Abstand zwischen Wochentag/Zeit-Inputs und Cadence-Pills (`space-y-5`)
+
+### Fix: Billing-Label dynamisch
+- Anzeige zeigt jetzt "Stundenkarte · 4er" / "Stundenkarte · 10er" statt immer "10er-Karte"
+- Typ-Selector im Editor heißt generisch "Stundenkarte"
+
+### Fix: Cadence-Anzeige zeigt gerade/ungerade
+- Termin-Kachel zeigt jetzt "Mo 14:00 · 2-wöchig gerade" bzw. "· 2-wöchig ungerade"
+
+### Fix: Verschieben-Feedback
+- Toast-Meldung nach erfolgreichem Verschieben: "Termin auf 25. April verschoben"
+
+### Fix: Makeup-Datum Timezone-sicher
+- `todayISO` in Heute-Ansicht nutzt jetzt lokales Datum (nicht UTC) — verhindert Mismatch zwischen 00:00–02:00 Uhr
+
+### Feinschliff
+- Bibliothek: Abstand zwischen Schüler-Karten bei mehrfach belegten Songs vergrößert (`space-y-4`)
+
 ## v1.2.1 — 2026-04-19
 
 ### Fix: Abrechnen & Verschieben Buttons sichtbar

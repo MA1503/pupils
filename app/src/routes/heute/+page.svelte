@@ -15,7 +15,7 @@
 
   const today = new Date();
   const todayAbbr = DAYS[today.getDay()];
-  const todayISO = today.toISOString().slice(0, 10);
+  const todayISO = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const todayWeekday = ISO_WEEKDAYS[today.getDay()];
   const todayKW = getISOWeek(today);
   const todayParity = weekParity(today);

@@ -8,7 +8,7 @@
     chargeLesson, addMakeupDate, switchBilling,
     addGeneralEntry, updateGeneralEntry, deleteGeneralEntry
   } from '$lib/repo';
-  import type { Student, Song, Entry, GeneralEntry, Billing, Schedule } from '$lib/types';
+  import type { Student, Song, Entry, GeneralEntry, Billing, BillingCard, Schedule } from '$lib/types';
   import ScheduleInput from '$lib/components/ScheduleInput.svelte';
   import BillingBadge from '$lib/components/BillingBadge.svelte';
 
@@ -345,14 +345,18 @@
   
   async function handleAddMakeupDate() {
     if (!student || !makeupDateValue) return;
+    const dateLabel = new Date(makeupDateValue + 'T12:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: 'long' });
     student = await addMakeupDate(student, makeupDateValue);
     showMakeupInput = false;
     makeupDateValue = '';
+    showToast(`Termin auf ${dateLabel} verschoben`);
   }
   
   function formatSchedule(s: Schedule): string {
     const dayName = WEEKDAY_NAMES[s.weekday];
-    const cadenceLabel = s.cadence === 'biweekly-even' || s.cadence === 'biweekly-odd' ? '2-wöchig' : '';
+    const cadenceLabel =
+      s.cadence === 'biweekly-even' ? '2-wöchig gerade' :
+      s.cadence === 'biweekly-odd'  ? '2-wöchig ungerade' : '';
     return `${dayName} ${s.time}${cadenceLabel ? ' · ' + cadenceLabel : ''}`;
   }
   
@@ -465,15 +469,16 @@
           {#if !editingBilling}
             <div class="flex items-center justify-between bg-surface-container-low p-3 rounded-lg">
               <span class="text-sm text-on-surface">
-                {student.billing?.type === 'card' ? '10er-Karte' : 
-                 student.billing?.type === 'contract' ? 'Festvertrag' : 'Frei'}
+                {student.billing?.type === 'card'
+                  ? `Stundenkarte · ${(student.billing as BillingCard).size}er`
+                  : student.billing?.type === 'contract' ? 'Festvertrag' : 'Frei'}
               </span>
               <button onclick={() => editingBilling = true} class="text-primary text-sm font-bold">Ändern</button>
             </div>
           {:else}
             <div class="space-y-3 bg-surface-container-low p-4 rounded-lg">
               <div class="flex flex-wrap gap-2">
-                {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: '10er-Karte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
+                {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: 'Stundenkarte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
                   <button
                     onclick={() => editBillingType = opt.key as Billing['type']}
                     class="px-3 py-1.5 rounded-full text-xs font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
