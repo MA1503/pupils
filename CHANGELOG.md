@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.2.9 — 2026-07-12
+
+### Abrechnung aufgeräumt (beim Bearbeiten eines Schülers)
+- „Bereits abgerechnet" brach auf dem Handy in zwei Zeilen um und schob dadurch das Eingabefeld nach unten. Die Beschriftung heißt jetzt kurz **„Abgerechnet"** und passt in eine Zeile — beide Felder stehen wieder auf gleicher Höhe.
+- **„Zurücksetzen"** sitzt jetzt unten rechts, auf einer Linie mit „Verbleibend: X Stunden". Dadurch bleibt oben Platz für die Beschriftungen.
+
+### Unterrichtstermin
+- Das Feld „Wochentag" war auf dem Handy zu schmal — die Beschriftung wurde abgeschnitten. Das Uhrzeit-Feld ist jetzt schmaler, „Wochentag" wieder vollständig lesbar.
+
 ## v1.2.8 — 2026-07-12
 
 ### Handy-Ansicht

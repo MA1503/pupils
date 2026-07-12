@@ -150,12 +150,12 @@
       {/if}
     </div>
     
-    <!-- Time Input -->
+    <!-- Time Input — feste Breite, damit der Wochentag nicht abgeschnitten wird -->
     <input
       bind:value={timeInput}
       oninput={onTimeInput}
       placeholder="Uhrzeit"
-      class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface"
+      class="w-28 flex-shrink-0 bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface"
     />
   </div>
   

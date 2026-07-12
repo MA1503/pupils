@@ -515,7 +515,7 @@
             </div>
             
             {#if editBillingType === 'card'}
-              <div class="flex gap-2">
+              <div class="flex items-end gap-2">
                 <div class="flex-1">
                   <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Kartengröße</p>
                   <input
@@ -526,16 +526,7 @@
                   />
                 </div>
                 <div class="flex-1">
-                  <div class="flex items-center justify-between mb-1">
-                    <p class="text-[10px] uppercase tracking-widest text-outline font-bold">Bereits abgerechnet</p>
-                    <button
-                      type="button"
-                      onclick={() => editCardAlreadyUsed = 0}
-                      class="text-xs text-primary font-bold"
-                    >
-                      Zurücksetzen
-                    </button>
-                  </div>
+                  <p class="text-[10px] uppercase tracking-widest text-outline font-bold mb-1">Abgerechnet</p>
                   <input
                     type="number"
                     bind:value={editCardAlreadyUsed}
@@ -545,9 +536,18 @@
                   />
                 </div>
               </div>
-              <p class="text-xs text-outline">
-                Verbleibend: {Math.max(0, editCardSize - editCardAlreadyUsed)} Stunden
-              </p>
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-outline">
+                  Verbleibend: {Math.max(0, editCardSize - editCardAlreadyUsed)} Stunden
+                </p>
+                <button
+                  type="button"
+                  onclick={() => editCardAlreadyUsed = 0}
+                  class="text-xs text-primary font-bold"
+                >
+                  Zurücksetzen
+                </button>
+              </div>
             {/if}
             
             {#if editBillingType === 'contract'}
