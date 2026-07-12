@@ -39,7 +39,7 @@ export type Student = {
   // v1.2.0 additions
   schedule?: Schedule;
   billing?: Billing;
-  billingHistory?: Billing[];   // vorherige Modelle bei Wechsel
+  billingHistory?: Array<Billing & { endedAt?: string }>;   // vorherige Modelle bei Wechsel (endedAt ab v1.3)
   makeupDates?: Array<string | MakeupSlot>; // ISO-Dates oder Nachholtermin mit Uhrzeit
   generalNotes?: GeneralEntry[]; // Allgemeine Einträge (embedded)
   // v1.2.6 additions

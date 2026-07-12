@@ -6,6 +6,7 @@
     listSongs, createSong, updateSong, archiveSong,
     listEntries, createEntry, updateEntry, deleteEntry,
     chargeLesson, addMakeupDate, switchBilling,
+    countStudentData, deleteStudentCascade,
     addGeneralEntry, updateGeneralEntry, deleteGeneralEntry
   } from '$lib/repo';
   import type { Student, Song, Entry, GeneralEntry, Billing, BillingCard, Schedule } from '$lib/types';
@@ -449,6 +450,41 @@
   function formatShortDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
+
+  function formatMonthYear(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('de-DE', { month: '2-digit', year: 'numeric' });
+  }
+
+  // Beschreibt ein (historisches oder aktuelles) Abrechnungsmodell für den Verlauf
+  function describeBilling(b: Billing & { endedAt?: string }, isCurrent: boolean): { label: string; detail: string } {
+    if (b.type === 'card') {
+      const used = b.charges?.length ?? 0;
+      return {
+        label: `${b.size}er Karte`,
+        detail: isCurrent
+          ? `${used} von ${b.size} abgerechnet`
+          : `${used} von ${b.size} abgerechnet${b.endedAt ? ` · bis ${formatMonthYear(b.endedAt)}` : ''}`
+      };
+    }
+    if (b.type === 'contract') {
+      return {
+        label: 'Festvertrag',
+        detail: isCurrent
+          ? `seit ${formatMonthYear(b.startDate)}`
+          : `${formatMonthYear(b.startDate)} – ${b.endedAt ? formatMonthYear(b.endedAt) : '?'}`
+      };
+    }
+    return { label: 'Frei', detail: '' };
+  }
+
+  async function handleDeleteStudent() {
+    if (!student) return;
+    const { songs: songCount, entries: entryCount } = await countStudentData(student._id);
+    const msg = `${student.name} endgültig löschen?\n\nDamit werden auch ${songCount} Song(s) und ${entryCount} Notiz(en) unwiderruflich gelöscht — auch auf dem Server und allen Geräten.`;
+    if (!confirm(msg)) return;
+    await deleteStudentCascade(student);
+    window.location.href = '/';
+  }
 </script>
 
 {#if loading}
@@ -597,6 +633,19 @@
               <p class="text-xs text-outline mt-1">Ohne Datum wird sofort pausiert.</p>
             </div>
           {/if}
+
+          {#if student.archived}
+            <div class="border-t border-outline-variant/30 pt-3 flex items-center justify-between gap-3">
+              <p class="text-xs text-outline">Löscht den Schüler mit allen Songs und Notizen — überall.</p>
+              <button
+                type="button"
+                onclick={handleDeleteStudent}
+                class="flex-shrink-0 px-4 py-2 rounded-xl font-headline font-bold text-sm bg-error-container text-on-error-container active:scale-95 transition-all"
+              >
+                Endgültig löschen
+              </button>
+            </div>
+          {/if}
         </div>
         <div class="flex gap-3 pt-2">
           <button
@@ -684,6 +733,37 @@
             ✕
           </button>
         </div>
+      {/if}
+
+      <!-- Abrechnungs-Verlauf (nur wenn es Historie gibt) -->
+      {#if student.billingHistory && student.billingHistory.length > 0}
+        <details class="mt-4">
+          <summary class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold cursor-pointer select-none list-none flex items-center gap-2 py-1">
+            <span class="material-symbols-outlined text-sm">expand_more</span>
+            Verlauf ({student.billingHistory.length + (student.billing && student.billing.type !== 'free' ? 1 : 0)})
+          </summary>
+          <div class="mt-2 space-y-2">
+            {#if student.billing && student.billing.type !== 'free'}
+              {@const cur = describeBilling(student.billing, true)}
+              <div class="flex items-center justify-between bg-surface-container-low px-4 py-2.5 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <div class="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0"></div>
+                  <span class="text-sm font-semibold text-on-surface">{cur.label}</span>
+                  <span class="text-xs text-outline">{cur.detail}</span>
+                </div>
+                <span class="text-[10px] uppercase tracking-widest text-primary font-bold">aktuell</span>
+              </div>
+            {/if}
+            {#each [...student.billingHistory].reverse() as h, i (student.billingHistory.length - i)}
+              {@const past = describeBilling(h, false)}
+              <div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-lg">
+                <div class="w-2.5 h-2.5 rounded-full border-2 border-outline-variant flex-shrink-0"></div>
+                <span class="text-sm font-semibold text-on-surface-variant">{past.label}</span>
+                <span class="text-xs text-outline">{past.detail}</span>
+              </div>
+            {/each}
+          </div>
+        </details>
       {/if}
     {/if}
   </section>

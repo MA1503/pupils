@@ -195,13 +195,49 @@ export async function addMakeupDate(student: Student, slot: { date: string; time
 export async function switchBilling(student: Student, newBilling: Billing): Promise<Student> {
   const updatedHistory = [...(student.billingHistory || [])];
   if (student.billing && student.billing.type !== 'free') {
-    updatedHistory.push(student.billing);
+    updatedHistory.push({ ...student.billing, endedAt: today() });
   }
-  
-  return updateStudent(student, { 
-    billing: newBilling, 
-    billingHistory: updatedHistory 
+
+  return updateStudent(student, {
+    billing: newBilling,
+    billingHistory: updatedHistory
   });
+}
+
+/** Zählt Songs und Notizen eines Schülers (inkl. archivierter) — für den Lösch-Dialog */
+export async function countStudentData(sid: string): Promise<{ songs: number; entries: number }> {
+  const db = getLocal();
+  const ulidPart = ulidOf(sid);
+  const songs = await db.allDocs({ startkey: `song:${ulidPart}:`, endkey: `song:${ulidPart}:\ufff0` });
+  let entries = 0;
+  for (const row of songs.rows) {
+    const songUlid = ulidOf(row.id);
+    const e = await db.allDocs({ startkey: `entry:${songUlid}:`, endkey: `entry:${songUlid}:\ufff0` });
+    entries += e.rows.length;
+  }
+  return { songs: songs.rows.length, entries };
+}
+
+/**
+ * Löscht einen Schüler endgültig, samt aller Songs und Notizen (Kaskade).
+ * Die Löschungen replizieren als Tombstones zur CouchDB und auf andere Geräte.
+ */
+export async function deleteStudentCascade(student: Student): Promise<void> {
+  const db = getLocal();
+  const ulidPart = ulidOf(student._id);
+  const toDelete: Array<{ _id: string; _rev: string; _deleted: true }> = [];
+
+  const songs = await db.allDocs({ startkey: `song:${ulidPart}:`, endkey: `song:${ulidPart}:\ufff0` });
+  for (const row of songs.rows) {
+    const songUlid = ulidOf(row.id);
+    const e = await db.allDocs({ startkey: `entry:${songUlid}:`, endkey: `entry:${songUlid}:\ufff0` });
+    for (const er of e.rows) toDelete.push({ _id: er.id, _rev: er.value.rev, _deleted: true });
+    toDelete.push({ _id: row.id, _rev: row.value.rev, _deleted: true });
+  }
+
+  const latest = await db.get(student._id);
+  toDelete.push({ _id: latest._id, _rev: latest._rev, _deleted: true });
+  await db.bulkDocs(toDelete);
 }
 
 // ---- General Entries (embedded in Student) ----

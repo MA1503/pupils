@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.0 — 2026-07-12
+
+### Neu: Abrechnungs-Verlauf
+- Auf der Schüler-Seite gibt es jetzt einen aufklappbaren **„Verlauf"**: Er zeigt das aktuelle Abrechnungsmodell und alle früheren — z.B. „Festvertrag · seit 04.2021" gefolgt von „10er Karte · 10 von 10 abgerechnet · bis 03.2026". So bleibt sichtbar, dass jemand seit Jahren dabei ist, auch wenn zwischendurch mal auf Karte gewechselt wurde.
+- Die Vergangenheit ist teilweise schon da: Modellwechsel wurden intern bereits seit längerem aufgezeichnet, nur nie angezeigt. Bei älteren Einträgen kann das „bis"-Datum fehlen — ab jetzt wird es bei jedem Wechsel mitgespeichert.
+- Der Verlauf erscheint nur bei Schülern, die schon mal gewechselt haben — sonst bleibt die Seite wie bisher.
+
+### Neu: Schüler endgültig löschen
+- Pausierte Schüler können jetzt gelöscht werden: Bearbeiten öffnen → im Status-Kasten **„Endgültig löschen"**. Aktive Schüler zeigen den Knopf bewusst nicht — erst pausieren, dann löschen (Schutz vor Versehen).
+- Vor dem Löschen zeigt eine Abfrage, was mitgelöscht wird (z.B. „…mit 3 Songs und 24 Notizen"). Gelöscht wird überall: lokal, auf dem Server und auf allen synchronisierten Geräten.
+- Songs verschwinden nur bei diesem Schüler. Singt eine andere Schülerin denselben Song, bleibt er bei ihr und in der Bibliothek erhalten.
+
 ## v1.2.11 — 2026-07-12
 
 ### Schutz vor Datenverlust im Browser
