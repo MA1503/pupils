@@ -88,7 +88,7 @@
               {#each items as {song, student} (song._id)}
                 <a
                   href="/s/{song.studentId}?song={songUlid(song)}"
-                  class="block bg-surface-container-low p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
+                  class="bg-surface-container-low p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
                 >
                   <span class="font-headline font-bold text-on-surface">{student.name}</span>
                   <span class="material-symbols-outlined text-outline-variant">chevron_right</span>

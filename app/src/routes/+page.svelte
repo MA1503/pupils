@@ -54,22 +54,22 @@
   </div>
 
   <!-- Sort Controls -->
-  <div class="flex gap-3">
+  <div class="sort-bar">
     <button
       onclick={() => toggleSort('name')}
-      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'name' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+      class="py-3 px-4 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'name' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Name
     </button>
     <button
       onclick={() => toggleSort('contractStart')}
-      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+      class="py-3 px-4 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'contractStart' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Vertragsbeginn
     </button>
     <button
       onclick={() => toggleSort('week')}
-      class="flex-1 py-3 px-6 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'week' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
+      class="py-3 px-4 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {$sortKey === 'week' ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}"
     >
       Wochenplan
     </button>
@@ -95,7 +95,7 @@
     {#each filtered as student (student._id)}
       <a
         href="/s/{student._id}"
-        class="block bg-surface-container-highest p-6 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
+        class="bg-surface-container-highest p-6 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
       >
         <div class="flex items-center gap-4">
           <div class="h-12 w-12 rounded-full bg-surface-container-low flex items-center justify-center overflow-hidden border border-outline-variant/10">

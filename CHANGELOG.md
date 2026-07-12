@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.8 — 2026-07-12
+
+### Handy-Ansicht
+- Die vier Knöpfe über der Schülerliste (Name, Vertragsbeginn, Wochenplan, Auge) passten auf dem Handy nicht nebeneinander — der letzte war abgeschnitten. Sie stehen jetzt in **zwei Reihen zu je zwei Knöpfen**. Auf größeren Bildschirmen bleibt es bei einer Reihe.
+
+### Karten wieder richtig ausgerichtet
+- Auf allen Karten (Schülerliste, Heute, Bibliothek) rutschten Pfeil und „Aktiv"-Kennzeichnung **unter** den Namen statt rechts daneben zu stehen. Sie sitzen jetzt wieder an der richtigen Stelle.
+- Die Karten waren dadurch unnötig hoch und hatten eine Lücke zwischen Name und Uhrzeit. Sie sind jetzt kompakt.
+
+### Restliche Abstände repariert
+- Im Nachgang zu v1.2.7: Es fehlten noch **33 weitere** interne Abstands- und Größen-Regeln. Betroffen waren u.a. die Innenabstände der Karten auf der Heute-Seite, die Seitenränder in Bibliothek und Einstellungen sowie die kleinen Bearbeiten- und Löschen-Knöpfe.
+- Die App wurde einmal komplett durchgeprüft: Es fehlt jetzt keine dieser Regeln mehr.
+
 ## v1.2.7 — 2026-07-12
 
 ### Abstände: die eigentliche Ursache behoben

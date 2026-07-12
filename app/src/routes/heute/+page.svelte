@@ -138,7 +138,7 @@
           {#each nextDayInfo.students as student (student._id)}
             <a
               href="/s/{student._id}"
-              class="block bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
+              class="bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
             >
               <div class="flex items-center gap-4">
                 <div class="h-11 w-11 rounded-full bg-surface-container-low flex items-center justify-center border border-outline-variant/20">
@@ -163,7 +163,7 @@
       {#each todayItems() as item (item.key)}
         <a
           href="/s/{item.student._id}"
-          class="block bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform shadow-primary"
+          class="bg-surface-container-highest p-5 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform shadow-primary"
         >
           <div class="flex items-center gap-4">
             <div class="h-11 w-11 rounded-full bg-surface-container-low flex items-center justify-center border border-primary/20">
@@ -195,7 +195,7 @@
         {#each otherStudents as student (student._id)}
           <a
             href="/s/{student._id}"
-            class="block bg-surface-container-low border border-outline-variant/20 p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
+            class="bg-surface-container-low border border-outline-variant/20 p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
           >
             <div class="flex items-center gap-3">
               <span class="material-symbols-outlined text-outline">person</span>
