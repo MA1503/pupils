@@ -61,10 +61,22 @@ echo "[run] CouchDB bereit."
 curl -sf -u "admin:${COUCHDB_PASSWORD}" -X PUT http://127.0.0.1:5984/pupils || true
 curl -sf -u "admin:${COUCHDB_PASSWORD}" -X PUT http://127.0.0.1:5984/_users || true
 
-curl -sf -u "admin:${COUCHDB_PASSWORD}" \
-  -X PUT http://127.0.0.1:5984/_users/org.couchdb.user:teacher \
-  -H "Content-Type: application/json" \
-  -d "{\"name\":\"teacher\",\"password\":\"${TEACHER_PASSWORD}\",\"roles\":[],\"type\":\"user\"}" || true
+# Teacher-User anlegen ODER Passwort aus den Add-on-Optionen durchsetzen.
+# Ohne _rev antwortet CouchDB bei existierendem User mit 409 — Passwort-
+# Änderungen in den Optionen blieben dadurch früher wirkungslos.
+TEACHER_URL="http://127.0.0.1:5984/_users/org.couchdb.user:teacher"
+TEACHER_REV=$(curl -sf -u "admin:${COUCHDB_PASSWORD}" "${TEACHER_URL}" | jq -r '._rev // empty' 2>/dev/null || true)
+if [[ -n "${TEACHER_REV}" ]]; then
+  curl -sf -u "admin:${COUCHDB_PASSWORD}" \
+    -X PUT "${TEACHER_URL}" \
+    -H "Content-Type: application/json" \
+    -d "{\"_rev\":\"${TEACHER_REV}\",\"name\":\"teacher\",\"password\":\"${TEACHER_PASSWORD}\",\"roles\":[],\"type\":\"user\"}" || true
+else
+  curl -sf -u "admin:${COUCHDB_PASSWORD}" \
+    -X PUT "${TEACHER_URL}" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"teacher\",\"password\":\"${TEACHER_PASSWORD}\",\"roles\":[],\"type\":\"user\"}" || true
+fi
 
 curl -sf -u "admin:${COUCHDB_PASSWORD}" \
   -X PUT http://127.0.0.1:5984/pupils/_security \

@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.2.11 — 2026-07-12
+
+### Schutz vor Datenverlust im Browser
+- Die App bittet den Browser jetzt, ihre lokalen Daten dauerhaft zu behalten. Vorher durfte der Browser sie bei Speichermangel ungefragt löschen — dann wirkte die App plötzlich leer, obwohl auf dem Server alles da war. Firefox fragt dafür einmalig um Erlaubnis, bitte mit „Erlauben" bestätigen.
+
+### Verbindungsprobleme werden endlich angezeigt
+- Bisher zeigte nur ein kleiner Farbpunkt oben rechts, ob die Verbindung zum Server steht — Ausfälle blieben praktisch unsichtbar. Jetzt erscheint ein deutlicher Hinweis:
+  - **„Anmeldung fehlgeschlagen"** (rot, mit Knopf „Verbindung ändern"), wenn das gespeicherte Passwort nicht mehr stimmt.
+  - **„Keine Verbindung zum Server"**, wenn der Server nicht erreichbar ist. Änderungen gehen dabei nicht verloren — sie werden lokal gespeichert und später übertragen.
+- Die App prüft die Verbindung beim Start und danach jede Minute.
+
+### Passwort-Änderung in den Add-on-Optionen wirkt jetzt
+- Wer das `teacher_password` in den Add-on-Einstellungen ändert, ändert damit ab jetzt wirklich das Passwort (nach Neustart des Add-ons). Vorher wurde die Änderung stillschweigend ignoriert — das Passwort blieb für immer das von der allerersten Installation.
+- **Hinweis:** Falls in den Add-on-Optionen ein anderes Passwort steht als das, mit dem die App aktuell verbunden ist, gilt nach diesem Update das aus den Optionen. Die App zeigt dann den roten Hinweis — einmal über „Verbindung ändern" das Passwort aus den Add-on-Optionen eintragen, fertig.
+
 ## v1.2.10 — 2026-07-12
 
 ### Schülerliste

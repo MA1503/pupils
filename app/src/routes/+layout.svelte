@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { loadConfig, startSync, onSyncStatus, getLocal } from '$lib/db';
+  import { loadConfig, startSync, onSyncStatus, getLocal, testConnection } from '$lib/db';
   import { syncStatus } from '$lib/stores';
   import { loadSettings, fetchAndStoreHolidays } from '$lib/holidays';
   import { listStudents, updateStudent, listSongs, listEntries, archiveSong } from '$lib/repo';
@@ -12,6 +12,28 @@
   let { children } = $props();
   let currentPath = $derived($page.url.pathname);
   let studioName = $state('');
+
+  // Sync-Problem-Banner: 'auth' = Passwort falsch, 'offline' = Server nicht erreichbar.
+  // Aktiver Check statt Sync-Events: PouchDB meldet mit retry:true bei toter
+  // Verbindung nur 'paused' ohne Fehler — der Ausfall wäre sonst unsichtbar.
+  let syncProblem = $state<'auth' | 'offline' | null>(null);
+  let checking = false;
+
+  async function checkSyncHealth() {
+    if (checking) return;
+    checking = true;
+    try {
+      const cfg = loadConfig();
+      if (!cfg) return;
+      await testConnection(cfg.url, cfg.user, cfg.pass);
+      syncProblem = null;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      syncProblem = msg.startsWith('401') ? 'auth' : 'offline';
+    } finally {
+      checking = false;
+    }
+  }
 
   const dotColor = $derived(
     $syncStatus === 'active' ? 'bg-green-500' :
@@ -29,8 +51,28 @@
     if (cfg) {
       startSync(cfg.url, cfg.user, cfg.pass);
     }
-    const unsubscribe = onSyncStatus((s) => syncStatus.set(s));
-    
+    const unsubscribe = onSyncStatus((s) => {
+      syncStatus.set(s);
+      if (s === 'error' || s === 'denied') {
+        checkSyncHealth();
+      } else if (s === 'active') {
+        syncProblem = null;
+      }
+    });
+
+    // Gesundheits-Check: beim Start und dann minütlich
+    let healthTimer: ReturnType<typeof setInterval> | null = null;
+    if (cfg) {
+      checkSyncHealth();
+      healthTimer = setInterval(checkSyncHealth, 60_000);
+    }
+
+    // Persistenten Speicher anfordern — sonst darf der Browser IndexedDB
+    // und localStorage bei Speicherdruck wegräumen (Datenverlust-Vorfall 07/2026).
+    navigator.storage?.persist?.()
+      .then((granted) => console.log('[storage] persistent:', granted))
+      .catch(() => {});
+
     // Fetch studio name
     fetch('/studio.json')
       .then(res => res.ok ? res.json() : null)
@@ -41,8 +83,11 @@
     
     // Run migrations and holiday fetch after sync starts
     runMigrationsAndHolidays();
-    
-    return unsubscribe;
+
+    return () => {
+      unsubscribe();
+      if (healthTimer) clearInterval(healthTimer);
+    };
   });
 
   async function runMigrationsAndHolidays() {
@@ -168,6 +213,27 @@
 
     <!-- Content -->
     <div class="mt-20 px-6 pb-6">
+      {#if syncProblem === 'auth' && currentPath !== '/setup'}
+        <div class="mb-4 p-4 rounded-xl bg-error-container text-on-error-container flex items-center justify-between gap-3">
+          <p class="text-sm font-body">
+            <span class="font-headline font-bold">Anmeldung fehlgeschlagen.</span>
+            Das gespeicherte Passwort stimmt nicht mehr.
+          </p>
+          <button
+            onclick={() => goto('/setup')}
+            class="flex-shrink-0 px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface font-headline font-bold text-sm active:scale-95 transition-transform"
+          >
+            Verbindung ändern
+          </button>
+        </div>
+      {:else if syncProblem === 'offline' && currentPath !== '/setup'}
+        <div class="mb-4 p-4 rounded-xl bg-surface-container-highest text-on-surface-variant">
+          <p class="text-sm font-body">
+            <span class="font-headline font-bold">Keine Verbindung zum Server.</span>
+            Änderungen werden lokal gespeichert und später synchronisiert.
+          </p>
+        </div>
+      {/if}
       {@render children()}
     </div>
 
