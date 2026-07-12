@@ -84,7 +84,7 @@
 </section>
 
 <!-- Student List -->
-<section class="mt-8 space-y-4">
+<section class="mt-8 space-y-4 pb-32">
   {#if loading}
     <p class="text-center text-outline py-12">Laden…</p>
   {:else if filtered.length === 0}

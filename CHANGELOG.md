@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.10 — 2026-07-12
+
+### Schülerliste
+- Am Ende der Liste wurde der letzte Schüler vom „+ Schüler"-Knopf verdeckt. Man kann jetzt ein Stück weiter scrollen — die letzte Karte steht frei über dem Knopf.
+
 ## v1.2.9 — 2026-07-12
 
 ### Abrechnung aufgeräumt (beim Bearbeiten eines Schülers)
