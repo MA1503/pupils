@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.2.6 — 2026-07-12
+
+### Pausieren: jetzt mit Datum
+- Beim Pausieren kann ein Datum angegeben werden — z.B. der 31.08., wenn die Sommerpause erst dann beginnt.
+- **Datum eingetragen und „Pausieren" gedrückt:** Die Schülerin bleibt ganz normal sichtbar und verschwindet erst automatisch, wenn der Tag da ist. In der Schülerliste steht bis dahin „Pausiert ab 31.08.".
+- **Kein Datum eingetragen:** Die Schülerin wird sofort pausiert — wie bisher.
+- **„Aktivieren":** Holt die Schülerin zurück und löscht das Datum wieder. Egal ob die Pause schon läuft oder nur geplant war.
+- Die Rückfrage „Wirklich pausieren?" ist weg. Pausieren lässt sich ja jederzeit rückgängig machen — stattdessen erscheint nur noch eine kurze Bestätigung unten am Bildschirm.
+
+### Backup wieder einspielen
+- Neu in den Einstellungen: **„Backup importieren"**. Damit lässt sich eine Backup-Datei auswählen und wieder einlesen — für den Fall, dass mal etwas verloren geht.
+- Vorhandene Schüler und Notizen werden dabei **nie überschrieben**. Es wird nur ergänzt, was fehlt. Ein versehentlicher zweiter Import richtet also keinen Schaden an.
+
+### Optik
+- Die Auswahl-Felder („wöchentlich", „Stundenkarte" …) sind etwas größer — vorher war der farbige Hintergrund zu knapp für den Text.
+- Auf der Heute-Seite haben die Kästchen unter „Alle anderen" jetzt Abstand zueinander und eine feine Umrandung, statt als ein Block zusammenzukleben.
+
 ## v1.2.5 — 2026-04-19
 
 ### Fix: Bibliothek-Optik

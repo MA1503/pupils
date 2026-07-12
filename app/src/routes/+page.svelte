@@ -32,6 +32,10 @@
     sortKey.set(key);
     localStorage.setItem('sortKey', key);
   }
+
+  function formatShortDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  }
 </script>
 
 <!-- Search & Filter Section -->
@@ -108,6 +112,8 @@
         <div class="flex items-center gap-2">
           {#if student.archived}
             <span class="text-primary-dim text-xs font-bold font-headline uppercase tracking-widest">Pausiert</span>
+          {:else if student.pausedFrom}
+            <span class="text-primary-dim text-xs font-bold font-headline uppercase tracking-widest">Pausiert ab {formatShortDate(student.pausedFrom)}</span>
           {:else if student.lessonSlot}
             <span class="text-primary text-xs font-bold font-headline uppercase tracking-widest">Aktiv</span>
           {/if}

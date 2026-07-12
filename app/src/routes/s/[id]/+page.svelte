@@ -9,6 +9,7 @@
     addGeneralEntry, updateGeneralEntry, deleteGeneralEntry
   } from '$lib/repo';
   import type { Student, Song, Entry, GeneralEntry, Billing, BillingCard, Schedule } from '$lib/types';
+  import { todayISO } from '$lib/date';
   import ScheduleInput from '$lib/components/ScheduleInput.svelte';
   import BillingBadge from '$lib/components/BillingBadge.svelte';
 
@@ -46,6 +47,16 @@
   let editCardAlreadyUsed = $state(0);
   let editContractStartDate = $state('');
   let editContractRate = $state<number | undefined>(undefined);
+
+  // Pausieren (v1.2.6): optionales Ab-Datum
+  let pauseDate = $state('');
+  const pausePlanned = $derived(!!student && !student.archived && !!student.pausedFrom);
+  const pauseStatusText = $derived(
+    !student ? ''
+      : student.archived ? 'Pausiert — nicht in Hauptliste'
+      : student.pausedFrom ? `Aktiv — pausiert ab ${formatShortDate(student.pausedFrom)}`
+      : 'Aktiv'
+  );
 
   let editingSong = $state(false);
   let editSongTitle = $state('');
@@ -227,6 +238,7 @@
     editContractStart = student.contractStart;
     editTariff = student.tariff;
     editingStudent = true;
+    pauseDate = student.pausedFrom ?? '';
     editBillingType = student.billing?.type ?? 'free';
     editCardAlreadyUsed = 0;
 
@@ -312,13 +324,27 @@
     editingStudent = false;
   }
   
-  async function toggleArchive() {
+  async function togglePause() {
     if (!student) return;
-    const msg = student.archived
-      ? `${student.name} wieder aktivieren?`
-      : `${student.name} pausieren? Der Schüler verschwindet aus der Hauptliste.`;
-    if (!confirm(msg)) return;
-    student = await updateStudent(student, { archived: !student.archived });
+
+    // Aktivieren — hebt sowohl laufende als auch geplante Pause auf
+    if (student.archived || student.pausedFrom) {
+      student = await updateStudent(student, { archived: false, pausedFrom: undefined });
+      pauseDate = '';
+      showToast(`${student.name} ist wieder aktiv.`);
+      return;
+    }
+
+    // Datum in der Zukunft: Pause nur vormerken, Schüler bleibt sichtbar
+    if (pauseDate && pauseDate > todayISO()) {
+      student = await updateStudent(student, { pausedFrom: pauseDate });
+      showToast(`${student.name} wird ab ${formatShortDate(pauseDate)} pausiert.`);
+      return;
+    }
+
+    // Kein Datum oder Datum bereits erreicht: sofort pausieren
+    student = await updateStudent(student, { archived: true, pausedFrom: pauseDate || undefined });
+    showToast(`${student.name} ist pausiert.`);
   }
   
   async function handleChargeLesson() {
@@ -419,6 +445,10 @@
   function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
   }
+
+  function formatShortDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
 </script>
 
 {#if loading}
@@ -477,7 +507,7 @@
               {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: 'Stundenkarte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
                 <button
                   onclick={() => editBillingType = opt.key as Billing['type']}
-                  class="px-3 py-1.5 rounded-full text-xs font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
+                  class="px-3.5 py-2 rounded-full text-xs leading-none font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
                 >
                   {opt.label}
                 </button>
@@ -537,19 +567,36 @@
           </div>
         </div>
         
-        <!-- Archiv-Toggle -->
-        <div class="flex items-center justify-between bg-surface-container-low p-4 rounded-xl">
-          <div>
-            <p class="text-sm font-semibold text-on-surface">Status</p>
-            <p class="text-xs text-outline mt-0.5">{student.archived ? 'Pausiert — nicht in Hauptliste' : 'Aktiv'}</p>
+        <!-- Pausieren -->
+        <div class="bg-surface-container-low p-4 rounded-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold text-on-surface">Status</p>
+              <p class="text-xs text-outline mt-0.5">{pauseStatusText}</p>
+            </div>
+            <button
+              type="button"
+              onclick={togglePause}
+              class="px-4 py-2 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {student.archived || pausePlanned ? 'bg-primary text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant border border-outline-variant/30'}"
+            >
+              {student.archived || pausePlanned ? 'Aktivieren' : 'Pausieren'}
+            </button>
           </div>
-          <button
-            type="button"
-            onclick={toggleArchive}
-            class="px-4 py-2 rounded-xl font-headline font-bold text-sm transition-all active:scale-95 {student.archived ? 'bg-primary text-on-primary-container shadow-primary' : 'bg-surface-container-highest text-on-surface-variant border border-outline-variant/30'}"
-          >
-            {student.archived ? 'Aktivieren' : 'Pausieren'}
-          </button>
+
+          {#if !student.archived && !pausePlanned}
+            <div>
+              <label for="pause-date" class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-1">
+                Pausieren ab (optional)
+              </label>
+              <input
+                id="pause-date"
+                type="date"
+                bind:value={pauseDate}
+                class="w-full bg-surface-container-highest border-none rounded-lg px-4 py-2 text-on-surface text-sm"
+              />
+              <p class="text-xs text-outline mt-1">Ohne Datum wird sofort pausiert.</p>
+            </div>
+          {/if}
         </div>
         <div class="flex gap-3 pt-2">
           <button

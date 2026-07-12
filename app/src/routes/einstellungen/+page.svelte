@@ -11,6 +11,10 @@
   let backupRunning = $state(false);
   let backupResult = $state<{ ok: boolean; log: string } | null>(null);
 
+  let importRunning = $state(false);
+  let importResult = $state<{ ok: boolean; log: string } | null>(null);
+  let importInput = $state<HTMLInputElement | null>(null);
+
   let settings = $state<AppSettings>({ _id: 'settings:app', type: 'settings' });
   let holidays = $state<Holiday[]>([]);
   let loadingHolidays = $state(true);
@@ -57,6 +61,61 @@
     }
   }
   
+  async function importBackup(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    importRunning = true;
+    importResult = null;
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (!Array.isArray(parsed?.rows)) {
+        importResult = { ok: false, log: 'Keine gültige Backup-Datei — erwartet wird ein Backup-JSON mit "rows".' };
+        return;
+      }
+
+      // _rev entfernen: die Dokumente sollen in der Ziel-DB neu angelegt werden
+      const docs = parsed.rows
+        .map((r: { doc?: Record<string, unknown> }) => r.doc)
+        .filter((d: Record<string, unknown> | undefined): d is Record<string, unknown> =>
+          !!d && typeof d._id === 'string' && !(d._id as string).startsWith('_design/')
+        )
+        .map(({ _rev, ...rest }: Record<string, unknown>) => rest);
+
+      if (docs.length === 0) {
+        importResult = { ok: false, log: 'Das Backup enthält keine Einträge.' };
+        return;
+      }
+
+      if (!confirm(`${docs.length} Einträge aus dem Backup importieren? Bestehende Einträge bleiben unverändert.`)) {
+        importResult = null;
+        return;
+      }
+
+      const results = await getLocal().bulkDocs(docs as never);
+      let imported = 0, skipped = 0, failed = 0;
+      // PouchDB meldet Konflikte als { name: 'conflict', status: 409 } — das heißt:
+      // Eintrag ist bereits vorhanden und wird bewusst nicht überschrieben.
+      for (const r of results as Array<{ ok?: boolean; name?: string; status?: number }>) {
+        if (r.ok) imported++;
+        else if (r.name === 'conflict' || r.status === 409) skipped++;
+        else failed++;
+      }
+
+      const parts = [`${imported} importiert`];
+      if (skipped > 0) parts.push(`${skipped} übersprungen (bereits vorhanden)`);
+      if (failed > 0) parts.push(`${failed} fehlgeschlagen`);
+      importResult = { ok: failed === 0, log: parts.join(' · ') };
+    } catch (e) {
+      importResult = { ok: false, log: `Fehler: ${e instanceof Error ? e.message : String(e)}` };
+    } finally {
+      importRunning = false;
+      // Zurücksetzen, damit dieselbe Datei erneut gewählt werden kann
+      if (importInput) importInput.value = '';
+    }
+  }
+
   async function handleBundeslandChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     const db = getLocal();
@@ -300,6 +359,32 @@
     <div class="mt-4 p-4 rounded-xl {backupResult.ok ? 'bg-primary/10 text-primary' : 'bg-error-container text-on-error-container'}">
       <p class="font-headline font-bold text-sm mb-2">{backupResult.ok ? 'Backup erfolgreich' : 'Backup fehlgeschlagen'}</p>
       <pre class="text-xs font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">{backupResult.log}</pre>
+    </div>
+  {/if}
+
+  <input
+    bind:this={importInput}
+    type="file"
+    accept=".json,application/json"
+    onchange={importBackup}
+    class="hidden"
+  />
+
+  <button
+    onclick={() => importInput?.click()}
+    disabled={importRunning}
+    class="w-full mt-3 py-4 bg-surface-container-highest text-on-surface font-headline font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
+  >
+    {importRunning ? 'Import läuft…' : 'Backup importieren'}
+  </button>
+  <p class="text-xs text-outline mt-2">
+    Spielt ein Backup-JSON wieder ein. Bestehende Einträge werden nie überschrieben.
+  </p>
+
+  {#if importResult}
+    <div class="mt-4 p-4 rounded-xl {importResult.ok ? 'bg-primary/10 text-primary' : 'bg-error-container text-on-error-container'}">
+      <p class="font-headline font-bold text-sm mb-2">{importResult.ok ? 'Import abgeschlossen' : 'Import fehlgeschlagen'}</p>
+      <pre class="text-xs font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">{importResult.log}</pre>
     </div>
   {/if}
 </div>

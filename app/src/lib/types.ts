@@ -42,6 +42,8 @@ export type Student = {
   billingHistory?: Billing[];   // vorherige Modelle bei Wechsel
   makeupDates?: Array<string | MakeupSlot>; // ISO-Dates oder Nachholtermin mit Uhrzeit
   generalNotes?: GeneralEntry[]; // Allgemeine Einträge (embedded)
+  // v1.2.6 additions
+  pausedFrom?: string;  // ISO-Date: Pause startet automatisch an diesem Datum
 };
 
 export type Song = {

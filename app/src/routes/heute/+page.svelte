@@ -134,7 +134,7 @@
         <p class="text-[11px] uppercase tracking-[0.2em] text-outline font-bold mb-4">
           Nächstes Mal · {nextDayInfo.dateStr}
         </p>
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-4">
           {#each nextDayInfo.students as student (student._id)}
             <a
               href="/s/{student._id}"
@@ -191,11 +191,11 @@
         <span class="material-symbols-outlined text-sm">expand_more</span>
         Alle anderen ({otherStudents.length})
       </summary>
-      <div class="space-y-3 mt-4">
+      <div class="space-y-4 mt-4">
         {#each otherStudents as student (student._id)}
           <a
             href="/s/{student._id}"
-            class="block bg-surface-container-low p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
+            class="block bg-surface-container-low border border-outline-variant/20 p-4 rounded-xl flex items-center justify-between active:scale-[0.98] transition-transform"
           >
             <div class="flex items-center gap-3">
               <span class="material-symbols-outlined text-outline">person</span>

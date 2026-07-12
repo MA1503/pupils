@@ -122,3 +122,12 @@ export function getISOWeek(date: Date): number {
 export function weekParity(date: Date): 'even' | 'odd' {
   return getISOWeek(date) % 2 === 0 ? 'even' : 'odd';
 }
+
+/**
+ * Heutiges Datum als ISO-String in lokaler Zeit.
+ * Nicht toISOString() — das rechnet nach UTC um und liefert abends den Vortag.
+ */
+export function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

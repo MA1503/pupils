@@ -6,7 +6,7 @@
   import { syncStatus } from '$lib/stores';
   import { loadSettings, fetchAndStoreHolidays } from '$lib/holidays';
   import { listStudents, updateStudent, listSongs, listEntries, archiveSong } from '$lib/repo';
-  import { parseSlotToSchedule } from '$lib/date';
+  import { parseSlotToSchedule, todayISO } from '$lib/date';
   import '../app.css';
 
   let { children } = $props();
@@ -63,7 +63,13 @@
     } catch (e) {
       console.error('Migration Allg. songs failed:', e);
     }
-    
+
+    try {
+      await applyScheduledPauses();
+    } catch (e) {
+      console.error('Geplante Pausen konnten nicht angewendet werden:', e);
+    }
+
     // Holiday fetch
     try {
       const db = getLocal();
@@ -122,6 +128,18 @@
         ];
         await updateStudent(s, { generalNotes });
         await archiveSong(song);
+      }
+    }
+  }
+
+  // Geplante Pausen anwenden: pausedFrom erreicht → Schüler pausieren
+  async function applyScheduledPauses() {
+    const today = todayISO();
+    const students = await listStudents(true);
+    for (const s of students) {
+      if (s.archived || !s.pausedFrom) continue;
+      if (s.pausedFrom <= today) {
+        await updateStudent(s, { archived: true });
       }
     }
   }
