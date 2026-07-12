@@ -125,7 +125,7 @@
   }
 </script>
 
-<div class="space-y-5">
+<div class="space-y-6">
   <div class="flex gap-3">
     <!-- Weekday Input -->
     <div class="relative flex-1">
@@ -164,7 +164,7 @@
     {#each CADENCES as c}
       <button
         onclick={() => onCadenceChange(c.key as Schedule['cadence'])}
-        class="px-3.5 py-2 rounded-full text-xs leading-none font-headline font-bold transition-all {cadence === c.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'}"
+        class="px-5 py-2 rounded-full text-xs leading-none font-headline font-bold transition-all {cadence === c.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'}"
       >
         {c.label}
       </button>

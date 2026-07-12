@@ -350,7 +350,7 @@
   <button
     onclick={runBackup}
     disabled={backupRunning}
-    class="w-full mt-3 py-4 bg-surface-container-highest text-on-surface font-headline font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
+    class="w-full mt-5 py-4 bg-surface-container-highest text-on-surface font-headline font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
   >
     {backupRunning ? 'Backup läuft…' : 'Backup jetzt starten'}
   </button>
@@ -373,7 +373,7 @@
   <button
     onclick={() => importInput?.click()}
     disabled={importRunning}
-    class="w-full mt-3 py-4 bg-surface-container-highest text-on-surface font-headline font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
+    class="w-full mt-4 py-4 bg-surface-container-highest text-on-surface font-headline font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
   >
     {importRunning ? 'Import läuft…' : 'Backup importieren'}
   </button>

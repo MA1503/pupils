@@ -507,7 +507,7 @@
               {#each [{key: 'free', label: 'Frei'}, {key: 'card', label: 'Stundenkarte'}, {key: 'contract', label: 'Festvertrag'}] as opt}
                 <button
                   onclick={() => editBillingType = opt.key as Billing['type']}
-                  class="px-3.5 py-2 rounded-full text-xs leading-none font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
+                  class="px-5 py-2 rounded-full text-xs leading-none font-bold {editBillingType === opt.key ? 'bg-primary text-on-primary-container' : 'bg-surface-container-highest text-on-surface-variant'}"
                 >
                   {opt.label}
                 </button>

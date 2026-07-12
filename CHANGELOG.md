@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.7 — 2026-07-12
+
+### Abstände: die eigentliche Ursache behoben
+- In der App fehlten intern mehrere Abstands-Regeln. Dadurch wurden Abstände, die eigentlich vorgesehen waren, an rund 25 Stellen einfach ignoriert — deshalb klebte vieles aneinander.
+- Diese Regeln sind jetzt ergänzt. Betroffen waren u.a. die Knöpfe in den Einstellungen, die Auswahl-Felder und diverse kleinere Abstände in der ganzen App.
+
+### Auswahl-Felder
+- Die Felder („wöchentlich", „Stundenkarte" …) sind jetzt auch in der **Breite** großzügiger, nicht nur in der Höhe.
+- Sie kleben nicht mehr am Feld für den Unterrichtstermin, sondern haben deutlich Abstand.
+
+### Einstellungen
+- „Verbindung ändern", „Backup jetzt starten" und „Backup importieren" haben jetzt sichtbaren Abstand zueinander.
+
 ## v1.2.6 — 2026-07-12
 
 ### Pausieren: jetzt mit Datum
